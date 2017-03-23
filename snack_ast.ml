@@ -5,6 +5,7 @@ type ident = string
 type beantype =
   | Bool
   | Int
+  | Float
 
 type typedef = (ident * beantype)
 
@@ -33,6 +34,7 @@ type unop =
 type expr =
   | Ebool of bool
   | Eint of int
+  | Efloat of float
   | Elval of lvalue
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)

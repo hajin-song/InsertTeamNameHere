@@ -5,6 +5,7 @@ open Snack_ast
 
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
+%token <float> FLOAT_CONST
 %token <string> IDENT
 %token BOOL INT
 %token WRITE READ
@@ -40,6 +41,7 @@ decls :
 typespec :
   | BOOL { Bool }
   | INT { Int }
+  | FLOAT { Float }
 
 /* Builds stmts in reverse order */
 stmts:
@@ -63,6 +65,7 @@ lvalue:
 expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }
+  | FLOAT_CONST { Efloat $1 }
   | lvalue { Elval $1 }
   /* Binary operators */
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
