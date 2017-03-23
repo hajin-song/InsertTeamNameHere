@@ -19,7 +19,9 @@ open Snack_ast
 %token SEMICOLON
 %token EOF
 
-%left AND OR NOT
+%left OR
+%left AND
+%left NOT
 %nonassoc EQ NEQ LT GT GTEQ LTEQ
 %left PLUS MINUS
 %left MUL DIV
