@@ -7,9 +7,11 @@ open Snack_ast
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
 %token <string> IDENT
-%token BOOL INT
+%token BOOL INT FLOAT
 %token WRITE READ
 %token ASSIGN
+%token WHILE DO OD
+%token IF THEN ELSE FI
 %token LPAREN RPAREN
 %token EQ NEQ LT GT GTEQ LTEQ
 %token PLUS MINUS MUL DIV

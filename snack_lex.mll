@@ -13,6 +13,13 @@ rule token = parse
   | '-'?digit+'.'digit+ as lxm  { FLOAT_CONST(float_of_string lxm) }
   | '-'?digit+ as lxm           { INT_CONST(int_of_string lxm) }
   (* keywords *)
+  | "if"    { IF }
+  | "then"  { THEN }
+  | "else"  { ELSE }
+  | "fi"    { FI }
+  | "while" { WHILE }
+  | "do"    { DO }
+  | "od"    { OD }
   | "bool"  { BOOL }
   | "int"   { INT }
   | "true"  { BOOL_CONST true }
