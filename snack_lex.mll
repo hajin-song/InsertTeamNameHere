@@ -8,24 +8,32 @@ let alnum = alpha | '_' | '\'' | digit
 let digits = digit+
 let ident = (alpha | '_') alnum*
 rule token = parse
-    [' ' '\t']    { token lexbuf }     (* skip blanks *)
-  | '\n'          { Lexing.new_line lexbuf ; token lexbuf }
-  | '-'?['0'-'9']+ as lxm { INT_CONST(int_of_string lxm) }
+    [' ' '\t']                  { token lexbuf }     (* skip blanks *)
+  | '\n'                        { Lexing.new_line lexbuf ; token lexbuf }
+  | '-'?['0'-'9']+ as lxm       { INT_CONST(int_of_string lxm) }
   (* keywords *)
-  | "bool" { BOOL }
-  | "int" { INT }
-  | "true" { BOOL_CONST true }
+  | "bool"  { BOOL }
+  | "int"   { INT }
+  | "true"  { BOOL_CONST true }
   | "false" { BOOL_CONST false }
-  | "read" { READ }
+  | "read"  { READ }
   | "write" { WRITE }
-  | ":=" { ASSIGN }
-  | '(' { LPAREN }
-  | ')' { RPAREN }
-  | '=' { EQ }
-  | '<' { LT }
-  | '+' { PLUS }
-  | '-' { MINUS }
-  | '*' { MUL }
-  | ';' { SEMICOLON }
+  | "and"   { AND }
+  | "or"    { OR }
+  | "not"   { NOT }
+  | ":="    { ASSIGN }
+  | '('     { LPAREN }
+  | ')'     { RPAREN }
+  | '='     { EQ }
+  | "!="    { NEQ }
+  | '<'     { LT }
+  | '>'     { GT }
+  | "<="    { LTEQ }
+  | ">="    { GTEQ }
+  | '+'     { PLUS }
+  | '-'     { MINUS }
+  | '*'     { MUL }
+  | '/'     { DIV }
+  | ';'     { SEMICOLON }
   | ident as lxm { IDENT lxm }
   | eof { EOF }

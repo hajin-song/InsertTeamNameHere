@@ -10,14 +10,16 @@ open Snack_ast
 %token WRITE READ
 %token ASSIGN
 %token LPAREN RPAREN
-%token EQ LT
-%token PLUS MINUS MUL
+%token EQ NEQ LT GT GTEQ LTEQ
+%token PLUS MINUS MUL DIV
+%token AND OR NOT
 %token SEMICOLON
 %token EOF
 
-%nonassoc EQ LT
+%left AND OR NOT
+%nonassoc EQ NEQ LT GT GTEQ LTEQ
 %left PLUS MINUS
-%left MUL
+%left MUL DIV
 %nonassoc UMINUS
 
 %type <Snack_ast.program> program
@@ -67,6 +69,10 @@ expr:
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
   | expr MUL expr { Ebinop ($1, Op_mul, $3) }
   | expr EQ expr { Ebinop ($1, Op_eq, $3) }
+  | expr NEQ expr { Ebinop ($1, Op_neq, $3) }
   | expr LT expr { Ebinop ($1, Op_lt, $3) }
+  | expr GT expr { Ebinop ($1, Op_gt, $3) }
+  | expr LTEQ expr { Ebinop ($1, Op_lteq, $3) }
+  | expr GTEQ expr { Ebinop ($1, Op_gteq, $3) }
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | LPAREN expr RPAREN { $2 }

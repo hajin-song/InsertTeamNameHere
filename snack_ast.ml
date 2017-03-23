@@ -13,7 +13,19 @@ type lvalue =
   | LField of (lvalue * ident)
 
 type binop =
-  | Op_add | Op_sub | Op_mul | Op_eq | Op_lt
+  | Op_add
+  | Op_sub
+  | Op_mul
+  | Op_div
+  | Op_eq
+  | Op_neq
+  | Op_lt
+  | Op_gt
+  | Op_gteq
+  | Op_lteq
+  | Op_or
+  | Op_and
+  | Op_not
 
 type unop =
   | Op_minus
