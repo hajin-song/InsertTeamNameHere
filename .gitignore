@@ -1,2 +1,6 @@
 *.cmo
 *.cmx
+*.cmi
+*.o
+*.byte
+./snack

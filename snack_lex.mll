@@ -10,8 +10,8 @@ let ident = (alpha | '_') alnum*
 rule token = parse
     [' ' '\t']                  { token lexbuf }     (* skip blanks *)
   | '\n'                        { Lexing.new_line lexbuf ; token lexbuf }
-  | '-'?digit+'.'digit+ as lxm  { FLOAT_CONST(float_of_string lxm) }
   | '-'?digit+ as lxm           { INT_CONST(int_of_string lxm) }
+  | '-'?digit+'.'digit+ as lxm  { FLOAT_CONST(float_of_string lxm) }
   (* keywords *)
   | "if"    { IF }
   | "then"  { THEN }
@@ -22,6 +22,7 @@ rule token = parse
   | "od"    { OD }
   | "bool"  { BOOL }
   | "int"   { INT }
+  | "float" { FLOAT }
   | "true"  { BOOL_CONST true }
   | "false" { BOOL_CONST false }
   | "read"  { READ }

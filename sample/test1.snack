@@ -1,0 +1,6 @@
+int tove;
+float tova;
+tova := 2.9;
+read tove;
+tove := 2*tove + 42;
+write tove;
