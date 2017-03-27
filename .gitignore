@@ -3,4 +3,7 @@
 *.cmi
 *.o
 *.byte
-./snack
+snack
+snack_lex.ml
+snack_parse.ml
+snack_parse.mli
