@@ -1,6 +1,6 @@
 (* Specification of an AST for bean *)
 type ident = string
- 
+
 (* Keep aliases intact for pretty printing. *)
 type beantype =
   | Bool
@@ -45,14 +45,17 @@ type rvalue =
 
 type decl = (ident * beantype)
 
-type stmt = 
+type stmt =
   | Assign of (lvalue * rvalue)
   | Read of lvalue
   | Write of expr
+  | Ifthen of (expr * stmt list)
+  | Ifthenelse of (expr * stmt list * stmt list)
+  | While of (expr * stmt list)
 
 type program = {
   decls : typedef list ;
   stmts : stmt list
 }
- 
+
 type t = program

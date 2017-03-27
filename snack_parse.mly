@@ -53,7 +53,10 @@ stmts:
   | { [] }
 
 stmt :
-  stmt_body SEMICOLON { $1 }
+  | stmt_body SEMICOLON { $1 }
+  | IF expr THEN stmts FI { Ifthen ($2, $4) }
+  | IF expr THEN stmts ELSE stmts FI { Ifthenelse ($2, $4, $6) }
+  | WHILE expr DO stmts OD { While ($2, $4) }
 
 stmt_body:
   | READ lvalue { Read $2 }
