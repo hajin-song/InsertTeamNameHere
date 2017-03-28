@@ -1,8 +1,13 @@
-int tove;
-float tova;
-tova := 2.9;
-read tove;
-tove := 2*tove + 42;
-write tove;
-if true then tova := 4.9; fi
-while true do tova := tova + 2; od
+proc f (val int a, ref float b)
+	int tove;
+	float tova;
+	tova := 2.9;
+	read tove;
+	tove := 2*tove + 42;
+	write tove;
+	if true then tova := 4.9; fi
+	while true do tova := tova + 2; od
+end
+
+proc main ()
+end

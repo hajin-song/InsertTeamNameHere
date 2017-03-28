@@ -7,6 +7,7 @@ open Snack_ast
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
 %token <string> IDENT
+%token PROC VAL REF END
 %token BOOL INT FLOAT
 %token WRITE READ
 %token ASSIGN
@@ -16,7 +17,7 @@ open Snack_ast
 %token EQ NEQ LT GT GTEQ LTEQ
 %token PLUS MINUS MUL DIV
 %token AND OR NOT
-%token SEMICOLON
+%token SEMICOLON COMMA
 %token EOF
 
 %left OR
@@ -32,8 +33,30 @@ open Snack_ast
 %start program
 %%
 
-program:
-  decls stmts { { decls = List.rev $1 ; stmts = List.rev $2 } }
+program: procs { List.rev $1 }
+
+procs:
+  | procs proc { $2 :: $1 }
+  | { [] }
+
+proc : PROC header decls stmts END { { header = $2 ; decls = List.rev $3 ; stmts = List.rev $4 } }
+
+typespec :
+  | BOOL { Bool }
+  | INT { Int }
+  | FLOAT { Float }
+
+header : 
+  | IDENT LPAREN arguments RPAREN { ($1, $3) }
+
+argument :
+  | REF typespec IDENT { Ref ($3, $2) }
+  | VAL typespec IDENT { Val ($3, $2) }
+
+arguments : 
+  | arguments COMMA argument { $3 :: $1 }
+  | argument { [$1] }
+  | { [] }
 
 decl :
   | typespec IDENT SEMICOLON { ($2, $1) }
@@ -41,11 +64,6 @@ decl :
 decls :
   | decls decl { $2 :: $1 }
   | { [] }
-
-typespec :
-  | BOOL { Bool }
-  | INT { Int }
-  | FLOAT { Float }
 
 /* Builds stmts in reverse order */
 stmts:

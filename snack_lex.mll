@@ -23,6 +23,10 @@ rule token = parse
   | "bool"  { BOOL }
   | "int"   { INT }
   | "float" { FLOAT }
+  | "proc"  { PROC }
+  | "ref"   { REF }
+  | "val"   { VAL }
+  | "end"   { END }
   | "true"  { BOOL_CONST true }
   | "false" { BOOL_CONST false }
   | "read"  { READ }
@@ -44,5 +48,6 @@ rule token = parse
   | '*'     { MUL }
   | '/'     { DIV }
   | ';'     { SEMICOLON }
+  | ','     { COMMA }
   | ident as lxm { IDENT lxm }
   | eof { EOF }

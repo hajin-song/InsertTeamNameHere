@@ -31,6 +31,12 @@ type binop =
 type unop =
   | Op_minus
 
+type argument =
+  | Val of typedef
+  | Ref of typedef
+
+type header = (ident * argument list)
+
 type expr =
   | Ebool of bool
   | Eint of int
@@ -53,9 +59,12 @@ type stmt =
   | Ifthenelse of (expr * stmt list * stmt list)
   | While of (expr * stmt list)
 
-type program = {
+type proc = {
+  header : header ;
   decls : typedef list ;
   stmts : stmt list
 }
+
+type program = proc list
 
 type t = program
