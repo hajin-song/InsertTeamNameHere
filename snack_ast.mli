@@ -9,10 +9,6 @@ type beantype =
 
 type typedef = (ident * beantype)
 
-type lvalue =
-  | LId of ident
-  | LField of (lvalue * ident)
-
 type binop =
   | Op_add
   | Op_sub
@@ -27,7 +23,6 @@ type binop =
   | Op_or
   | Op_and
   | Op_not
-  | Op_range
 
 type unop =
   | Op_minus
@@ -42,16 +37,24 @@ type expr =
   | Ebool of bool
   | Eint of int
   | Efloat of float
-  | Elval of lvalue
+  | EId of ident
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
   | Earray of expr list
+
+type lvalue =
+  | LId of ident
+  | Larray of (ident * expr list)
 
 (* Will need to AST elements with additional data.  *)
 type rvalue =
   | Rexpr of expr
 
-type decl = (ident * beantype)
+type range = (int * int)
+
+type decl =
+  | Dvar of (beantype * ident)
+  | Darr of (beantype * ident * range list)
 
 type stmt =
   | Assign of (lvalue * rvalue)
@@ -63,7 +66,7 @@ type stmt =
 
 type proc = {
   header : header ;
-  decls : typedef list ;
+  decls : decl list ;
   stmts : stmt list
 }
 

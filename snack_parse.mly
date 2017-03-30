@@ -59,11 +59,19 @@ arguments :
   | { [] }
 
 decl :
-  | typespec IDENT SEMICOLON { ($2, $1) }
+  | typespec IDENT SEMICOLON { Dvar ($1, $2) }
+  | typespec IDENT LBRACKET range_list RBRACKET SEMICOLON { Darr ($1, $2, $4) }
 
 decls :
   | decls decl { $2 :: $1 }
   | { [] }
+
+range :
+  | INT_CONST RANGE INT_CONST { ($1, $3) }
+
+range_list :
+  | range_list COMMA range { $3 :: $1 }
+  | range { [$1] }
 
 /* Builds stmts in reverse order */
 stmts:
@@ -86,6 +94,7 @@ rvalue :
 
 lvalue:
   | IDENT { LId $1 }
+  | IDENT LBRACKET expr_list RBRACKET { Larray ($1, $3) }
 
 expr_list:
   | expr_list COMMA expr { $3 :: $1 }
@@ -96,7 +105,7 @@ expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }
   | FLOAT_CONST { Efloat $1 }
-  | lvalue { Elval $1 }
+  | IDENT { EId $1 }
   /* Binary operators */
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
@@ -107,7 +116,5 @@ expr:
   | expr GT expr { Ebinop ($1, Op_gt, $3) }
   | expr LTEQ expr { Ebinop ($1, Op_lteq, $3) }
   | expr GTEQ expr { Ebinop ($1, Op_gteq, $3) }
-  | expr RANGE expr { Ebinop ($1, Op_range, $3) }
-  | LBRACKET expr_list RBRACKET { Earray $2 }
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | LPAREN expr RPAREN { $2 }
