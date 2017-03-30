@@ -13,9 +13,9 @@ open Snack_ast
 %token ASSIGN
 %token WHILE DO OD
 %token IF THEN ELSE FI
-%token LPAREN RPAREN
+%token LPAREN RPAREN LBRACKET RBRACKET
 %token EQ NEQ LT GT GTEQ LTEQ
-%token PLUS MINUS MUL DIV
+%token PLUS MINUS MUL DIV RANGE
 %token AND OR NOT
 %token SEMICOLON COMMA
 %token EOF
@@ -23,7 +23,7 @@ open Snack_ast
 %left OR
 %left AND
 %left NOT
-%nonassoc EQ NEQ LT GT GTEQ LTEQ
+%nonassoc EQ NEQ LT GT GTEQ LTEQ RANGE
 %left PLUS MINUS
 %left MUL DIV
 %nonassoc UMINUS
@@ -87,6 +87,11 @@ rvalue :
 lvalue:
   | IDENT { LId $1 }
 
+expr_list:
+  | expr_list COMMA expr { $3 :: $1 }
+  | expr { [$1] }
+  | { [] }
+
 expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }
@@ -102,5 +107,7 @@ expr:
   | expr GT expr { Ebinop ($1, Op_gt, $3) }
   | expr LTEQ expr { Ebinop ($1, Op_lteq, $3) }
   | expr GTEQ expr { Ebinop ($1, Op_gteq, $3) }
+  | expr RANGE expr { Ebinop ($1, Op_range, $3) }
+  | LBRACKET expr_list RBRACKET { Earray $2 }
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | LPAREN expr RPAREN { $2 }

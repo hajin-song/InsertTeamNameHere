@@ -37,6 +37,9 @@ rule token = parse
   | ":="    { ASSIGN }
   | '('     { LPAREN }
   | ')'     { RPAREN }
+  | '['     { LBRACKET }
+  | ']'     { RBRACKET }
+  | ".."    { RANGE }
   | '='     { EQ }
   | "!="    { NEQ }
   | '<'     { LT }

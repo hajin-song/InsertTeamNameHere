@@ -27,6 +27,7 @@ type binop =
   | Op_or
   | Op_and
   | Op_not
+  | Op_range
 
 type unop =
   | Op_minus
@@ -44,6 +45,7 @@ type expr =
   | Elval of lvalue
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
+  | Earray of expr list
 
 (* Will need to AST elements with additional data.  *)
 type rvalue =
