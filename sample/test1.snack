@@ -1,13 +1,14 @@
 proc f (val int a, ref float b)
 	int tove;
 	float tova;
+	int x[0..5];
 	tova := 2.9;
 	read tove;
+	read x[1,2];
 	tove := 2*tove + 42;
 	write tove;
 	if true then tova := 4.9; fi
 	while true do tova := tova + 2; od
-	write [2..2];
 end
 
 proc main ()

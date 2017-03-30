@@ -40,7 +40,7 @@ type expr =
   | EId of ident
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
-  | Earray of expr list
+  | Earray of (ident * expr list)
 
 type lvalue =
   | LId of ident

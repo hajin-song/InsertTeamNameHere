@@ -106,6 +106,7 @@ expr:
   | INT_CONST { Eint $1 }
   | FLOAT_CONST { Efloat $1 }
   | IDENT { EId $1 }
+  | IDENT LBRACKET expr_list RBRACKET { Earray ($1, $3) }
   /* Binary operators */
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
