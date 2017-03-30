@@ -1,15 +1,32 @@
-proc f (val int a, ref float b)
-	int tove;
-	float tova;
-	int x[0..5];
-	tova := 2.9;
-	read tove;
-	read x[1,2];
-	tove := 2*tove + 42;
-	write tove;
-	if true then tova := 4.9; fi
-	while true do tova := tova + 2; od
+proc main ()
+	int m;
+	int n;
+	read n;
+	while n > 1 do
+		m := n;
+		while m > 0 do
+			if m > 0 then
+				n := n - 1;
+				m := m - 1;
+				if m = 0 then
+					p(n);
+				fi
+			else
+				m := n - m;
+				m := m - 1;
+			fi
+		od
+	od
 end
 
-proc main ()
+proc p (ref int i)
+	i := 6 * i + 4;
+end
+
+proc q (val float x, ref int k)
+	int n;
+	float y;
+	bool a[1..8];
+	a[8] := true;
+	k := 42;
 end

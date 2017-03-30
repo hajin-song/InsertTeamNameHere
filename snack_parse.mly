@@ -88,6 +88,7 @@ stmt_body:
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | IDENT LPAREN expr_list RPAREN { Proccall ($1, $3) }
 
 rvalue :
   | expr { Rexpr $1 }
