@@ -1,7 +1,10 @@
+# Start comment
 proc main ()
-	int m;
+	# In function comment
+	int m; #inline *&^$*(#(bhe0978ry234f???"""comment
 	int n;
 	read n;
+	write "testing";
 	while n > 1 do
 		m := n;
 		while m > 0 do

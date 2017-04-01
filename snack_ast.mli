@@ -60,6 +60,7 @@ type stmt =
   | Assign of (lvalue * rvalue)
   | Read of lvalue
   | Write of expr
+  | WriteS of string
   | Ifthen of (expr * stmt list)
   | Ifthenelse of (expr * stmt list * stmt list)
   | While of (expr * stmt list)

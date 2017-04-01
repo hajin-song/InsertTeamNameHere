@@ -9,6 +9,7 @@ let digits = digit+
 let ident = (alpha | '_') alnum*
 rule token = parse
     [' ' '\t']                  { token lexbuf }     (* skip blanks *)
+  | '#'[^'\n']*'\n'             { Lexing.new_line lexbuf ; token lexbuf } (* skip comments *)
   | '\n'                        { Lexing.new_line lexbuf ; token lexbuf }
   | '-'?digit+ as lxm           { INT_CONST(int_of_string lxm) }
   | '-'?digit+'.'digit+ as lxm  { FLOAT_CONST(float_of_string lxm) }
@@ -52,5 +53,6 @@ rule token = parse
   | '/'     { DIV }
   | ';'     { SEMICOLON }
   | ','     { COMMA }
+  | '\"'    { QUOTE }
   | ident as lxm { IDENT lxm }
   | eof { EOF }

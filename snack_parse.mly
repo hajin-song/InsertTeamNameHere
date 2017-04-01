@@ -17,7 +17,7 @@ open Snack_ast
 %token EQ NEQ LT GT GTEQ LTEQ
 %token PLUS MINUS MUL DIV RANGE
 %token AND OR NOT
-%token SEMICOLON COMMA
+%token SEMICOLON COMMA QUOTE
 %token EOF
 
 %left OR
@@ -87,6 +87,7 @@ stmt :
 stmt_body:
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
+  | WRITE QUOTE IDENT QUOTE { WriteS $3 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
   | IDENT LPAREN expr_list RPAREN { Proccall ($1, $3) }
 
