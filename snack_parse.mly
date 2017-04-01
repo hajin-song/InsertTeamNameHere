@@ -119,5 +119,8 @@ expr:
   | expr GT expr { Ebinop ($1, Op_gt, $3) }
   | expr LTEQ expr { Ebinop ($1, Op_lteq, $3) }
   | expr GTEQ expr { Ebinop ($1, Op_gteq, $3) }
+  | expr OR expr { Ebinop ($1, Op_or, $3) }
+  | expr AND expr { Ebinop ($1, Op_and, $3) }
+  | NOT expr { Eunop (Op_not, $2) }
   | MINUS expr %prec UMINUS { Eunop (Op_minus, $2) }
   | LPAREN expr RPAREN { $2 }

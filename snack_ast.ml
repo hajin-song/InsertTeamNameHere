@@ -22,10 +22,10 @@ type binop =
   | Op_lteq
   | Op_or
   | Op_and
-  | Op_not
 
 type unop =
   | Op_minus
+  | Op_not
 
 type argument =
   | Val of typedef
