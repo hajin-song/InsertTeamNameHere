@@ -9,64 +9,89 @@ let pBool = print_bool;;
 let d = ref 1;;
 let indent = 4;;
 
-let print_header fmt (ident, args) = (* Print ident and args *) ()
 
-let rec print_ranges fmt ranges =
+let rec print_program fmt prog =
+	open_vbox 0;
+	match prog with
+	| [] -> ()
+	| {header; decls; stmts} :: tail ->
+		open_vbox indent;
+			print_header fmt header;
+			print_decls fmt decls;
+			print_stmts fmt stmts;
+		close_box(); print_cut();
+		kwd "end"; print_cut(); print_cut();
+		print_program fmt tail;
+	close_box();
+
+and print_header fmt (ident, args) =
+	open_box 0;
+		kwd "proc"; print_space();
+		id ident; print_space(); kwd "(";
+		print_args fmt args; kwd ")";
+	close_box(); print_cut();
+
+and print_args fmt args =
+	match args with
+	| arg :: [] ->
+		print_arg fmt arg;
+	| arg :: tail ->
+		print_arg fmt arg;
+		kwd ","; print_space();
+		print_args fmt tail;
+	| [] -> ();
+
+and print_arg fmt arg =
+	match arg with
+	| Val (ident, t) ->
+		kwd "val"; print_space();
+		print_type fmt t; print_space();
+		id ident;
+	| Ref (ident, t) -> 
+		kwd "ref"; print_space();
+		print_type fmt t; print_space();
+		id ident;
+
+and print_type fmt t =
+	match t with
+	| Bool  -> kwd "bool"
+	| Int -> kwd "int"
+	| Float -> kwd "float"
+
+and print_decls fmt decls =
+	match decls with
+	| [] -> ()
+	| decl :: tail ->
+		print_decl fmt decl;
+		print_decls fmt tail;
+
+and print_decl fmt decl =
+	open_box 0;
+	match decl with
+	| Dvar (t, ident) ->
+		print_type fmt t; print_space(); id ident; kwd ";";
+		close_box(); print_cut();
+
+	| Darr (t, ident, ranges) ->
+		print_type fmt t;
+		print_space();
+		id ident; kwd "[";
+		print_ranges fmt ranges;
+		kwd "]";
+		kwd ";";
+		close_box(); print_cut();
+
+and print_ranges fmt ranges =
 	match ranges with
 	| (r1, r2) :: [] ->
 		pInt r1; kwd ".."; pInt r2;
 	| (r1, r2) :: tail ->
 		pInt r1; kwd ".."; pInt r2;
-		kwd ",";
-		print_space();
+		kwd ","; print_space();
 		print_ranges fmt tail;
-	| [] -> ();;
+	| [] -> ();
 
-let print_decl fmt decl =
-	open_box 0;
-	match decl with
-	| Dvar (Bool, ident) ->
-		kwd "bool"; print_space(); id ident; kwd ";";
-		close_box(); print_cut();
-	| Dvar (Int, ident) ->
-		kwd "int"; print_space(); id ident; kwd ";";
-		close_box(); print_cut();
-	| Dvar (Float, ident) ->
-		kwd "float"; print_space(); id ident; kwd ";";
-		close_box(); print_cut();
-	| Darr (Bool, ident, ranges) ->
-		kwd "bool";
-		print_space();
-		id ident; kwd "[";
-		print_ranges fmt ranges;
-		kwd "]";
-		kwd ";";
-		close_box(); print_cut();
-	| Darr (Int, ident, ranges) ->
-		kwd "int";
-		print_space();
-		id ident; kwd "[";
-		print_ranges fmt ranges;
-		kwd "]";
-		kwd ";";
-		close_box(); print_cut();
-	| Darr (Float, ident, ranges) ->
-		kwd "float";
-		print_space();
-		id ident; kwd "[";
-		print_ranges fmt ranges;
-		kwd "]";
-		kwd ";";
-		close_box(); print_cut();;
-
-let rec print_decls fmt decls =
-	match decls with
-	| [] -> ()
-	| decl :: tail ->
-		print_decl fmt decl;
-		print_decls fmt tail;;
-
-let rec print_exprs fmt exprs =
+and print_exprs fmt exprs =
 	match exprs with
 	| [] -> ()
 	| expr :: tail ->
@@ -80,8 +105,8 @@ and print_expr fmt expr =
 	| Efloat value -> pFloat value;
 	| EId value -> id value;
 	| Ebinop (expr1, op, expr2) ->
-		print_expr fmt expr1;
-		print_binop fmt op;
+		print_expr fmt expr1; print_space();
+		print_binop fmt op; print_space();
 		print_expr fmt expr2;
 	| Eunop (op, expr1) ->
 		print_unop fmt op;
@@ -105,34 +130,37 @@ and print_expr_list fmt exprs =
 
 and print_binop fmt op =
 	match op with
-	| Op_add -> print_space(); kwd "+"; print_space();
-	| Op_sub -> print_space(); kwd "-"; print_space();
-	| Op_mul -> print_space(); kwd "*"; print_space();
-	| Op_div -> print_space(); kwd "/"; print_space();
-	| Op_eq -> print_space(); kwd "="; print_space();
-	| Op_neq -> print_space(); kwd "!="; print_space();
-	| Op_lt -> print_space(); kwd "<"; print_space();
-	| Op_gt -> print_space(); kwd ">"; print_space();
-	| Op_gteq -> print_space(); kwd ">="; print_space();
-	| Op_lteq -> print_space(); kwd "<="; print_space();
-	| Op_or -> print_space(); kwd "or"; print_space();
-	| Op_and -> print_space(); kwd "and"; print_space();
+	| Op_add -> kwd "+";
+	| Op_sub -> kwd "-";
+	| Op_mul -> kwd "*";
+	| Op_div -> kwd "/";
+	| Op_eq -> kwd "=";
+	| Op_neq -> kwd "!=";
+	| Op_lt -> kwd "<";
+	| Op_gt -> kwd ">";
+	| Op_gteq -> kwd ">=";
+	| Op_lteq -> kwd "<=";
+	| Op_or -> kwd "or";
+	| Op_and -> kwd "and";
 
 and print_unop fmt op =
 	match op with
 	| Op_not -> kwd "not"; print_space();
-	| Op_minus -> kwd "-";;
+	| Op_minus -> kwd "-";
 
-let print_lvalue fmt value =
+and print_lvalue fmt value =
 	match value with
 	| LId ident -> id ident;
-	| Larray (ident, exprs) -> id ident; print_space(); print_expr_list fmt exprs;;
+	| Larray (ident, exprs) ->
+		id ident; kwd "[";
+		print_expr_list fmt exprs; kwd "]";
 
-let rec print_stmts fmt stmts =
+and print_stmts fmt stmts =
 	match stmts with
 	| [] -> ()
-	| stmt :: tail -> print_stmt fmt stmt;
-					  print_stmts fmt tail;
+	| stmt :: tail ->
+		print_stmt fmt stmt;
+		print_stmts fmt tail;
 
 and print_stmt fmt stmt =
 	open_box 0;
@@ -140,6 +168,7 @@ and print_stmt fmt stmt =
 	| Assign (lvalue, rvalue) ->
 		print_lvalue fmt lvalue; print_space();
 		kwd ":="; print_space();
+		print_rvalue fmt rvalue;
 		kwd ";";
 		close_box(); print_cut();
 
@@ -199,15 +228,8 @@ and print_stmt fmt stmt =
 		id ident; kwd "(";
 		print_expr_list fmt exprs;
 		kwd ");";
-		close_box(); print_cut();;
+		close_box(); print_cut();
 
-let rec print_program fmt prog =
-	match prog with
-	| [] -> ()
-	| {header; decls; stmts} :: tail ->
-		print_header fmt header;
-		open_vbox 0;
-		print_decls fmt decls;
-		print_stmts fmt stmts;
-		close_box();
-		print_program fmt tail;;
+and print_rvalue fmt rvalue =
+	match rvalue with
+	| Rexpr expr -> print_expr fmt expr;
