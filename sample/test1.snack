@@ -5,6 +5,7 @@ proc main ()
 	int n;
 	read n;
 	write "testing";
+	write b[a,c,d,g];
 	write n and m and n;
 	write n or (m and m);
 	write not not n;
