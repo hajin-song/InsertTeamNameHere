@@ -97,19 +97,23 @@ rvalue :
 
 lvalue:
   | IDENT { LId $1 }
-  | IDENT LBRACKET expr_list RBRACKET { Larray ($1, List.rev $3) }
+  | IDENT LBRACKET arr_list RBRACKET { Larray ($1, List.rev $3) }
 
 expr_list:
   | expr_list COMMA expr { $3 :: $1 }
   | expr { [$1] }
   | { [] }
 
+arr_list:
+  | arr_list COMMA expr { $3 :: $1 }
+  | expr { [$1] }
+
 expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }
   | FLOAT_CONST { Efloat $1 }
   | IDENT { EId $1 }
-  | IDENT LBRACKET expr_list RBRACKET { Earray ($1, List.rev $3) }
+  | IDENT LBRACKET arr_list RBRACKET { Earray ($1, List.rev $3) }
   /* Binary operators */
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
