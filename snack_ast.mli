@@ -27,10 +27,6 @@ type unop =
   | Op_minus
   | Op_not
 
-type paren =
-  | L_paren
-  | R_paren
-
 type argument =
   | Val of typedef
   | Ref of typedef
@@ -45,6 +41,7 @@ type expr =
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
   | Earray of (ident * expr list)
+  | Eparen of expr
 
 type lvalue =
   | LId of ident
