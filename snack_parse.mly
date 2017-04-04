@@ -48,7 +48,7 @@ typespec :
   | FLOAT { Float }
 
 header : 
-  | IDENT LPAREN arguments RPAREN { ($1, $3) }
+  | IDENT LPAREN arguments RPAREN { ($1, List.rev $3) }
 
 argument :
   | REF typespec IDENT { Ref ($3, $2) }
@@ -90,14 +90,14 @@ stmt_body:
   | WRITE expr { Write $2 }
   | WRITE STRING { WriteS $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
-  | IDENT LPAREN expr_list RPAREN { Proccall ($1, $3) }
+  | IDENT LPAREN expr_list RPAREN { Proccall ($1, List.rev $3) }
 
 rvalue :
   | expr { Rexpr $1 }
 
 lvalue:
   | IDENT { LId $1 }
-  | IDENT LBRACKET expr_list RBRACKET { Larray ($1, $3) }
+  | IDENT LBRACKET expr_list RBRACKET { Larray ($1, List.rev $3) }
 
 expr_list:
   | expr_list COMMA expr { $3 :: $1 }
@@ -109,11 +109,12 @@ expr:
   | INT_CONST { Eint $1 }
   | FLOAT_CONST { Efloat $1 }
   | IDENT { EId $1 }
-  | IDENT LBRACKET expr_list RBRACKET { Earray ($1, $3) }
+  | IDENT LBRACKET expr_list RBRACKET { Earray ($1, List.rev $3) }
   /* Binary operators */
   | expr PLUS expr { Ebinop ($1, Op_add, $3) }
   | expr MINUS expr { Ebinop ($1, Op_sub, $3) }
   | expr MUL expr { Ebinop ($1, Op_mul, $3) }
+  | expr DIV expr { Ebinop ($1, Op_div, $3) }
   | expr EQ expr { Ebinop ($1, Op_eq, $3) }
   | expr NEQ expr { Ebinop ($1, Op_neq, $3) }
   | expr LT expr { Ebinop ($1, Op_lt, $3) }

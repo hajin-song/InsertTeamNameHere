@@ -18,6 +18,7 @@ let rec print_program fmt prog =
 		open_vbox indent;
 			print_header fmt header;
 			print_decls fmt decls;
+			print_cut();
 			print_stmts fmt stmts;
 		close_box(); print_cut();
 		kwd "end"; print_cut(); print_cut();
@@ -62,15 +63,15 @@ and print_decls fmt decls =
 	match decls with
 	| [] -> ()
 	| decl :: tail ->
+		print_cut(); open_box 0;
 		print_decl fmt decl;
+		close_box();
 		print_decls fmt tail;
 
 and print_decl fmt decl =
-	print_cut(); open_box 0;
 	match decl with
 	| Dvar (t, ident) ->
 		print_type fmt t; print_space(); id ident; kwd ";";
-		close_box();
 
 	| Darr (t, ident, ranges) ->
 		print_type fmt t;
@@ -79,7 +80,6 @@ and print_decl fmt decl =
 		print_ranges fmt ranges;
 		kwd "]";
 		kwd ";";
-		close_box();
 
 and print_ranges fmt ranges =
 	match ranges with
@@ -159,75 +159,79 @@ and print_stmts fmt stmts =
 	match stmts with
 	| [] -> ()
 	| stmt :: tail ->
+		print_cut(); open_box 0;
 		print_stmt fmt stmt;
+		close_box();
 		print_stmts fmt tail;
 
 and print_stmt fmt stmt =
-	print_cut(); open_box 0;
 	match stmt with
 	| Assign (lvalue, rvalue) ->
 		print_lvalue fmt lvalue; print_space();
 		kwd ":="; print_space();
 		print_rvalue fmt rvalue;
 		kwd ";";
-		close_box();
 
 	| Read lvalue ->
 		kwd "read"; print_space();
 		print_lvalue fmt lvalue; kwd ";";
-		close_box();
 
 	| Write expr ->
 		kwd "write"; print_space();
 		print_expr fmt expr; kwd ";";
-		close_box();
 
 	| WriteS str ->
 		kwd "write"; print_space();
 		id str; kwd ";";
-		close_box();
 
 	| Ifthen (expr, stmts) ->
-		open_vbox indent;
-			open_box 0;
-				kwd "if"; print_space();
-				print_expr fmt expr; print_space();
-				kwd "then";
-			close_box();
-			print_stmts fmt stmts;
-		close_box(); close_box(); print_cut();
-		kwd "fi";
+		open_vbox 0;
+			open_vbox indent;
+				open_box 0;
+					kwd "if"; print_space();
+					print_expr fmt expr; print_space();
+					kwd "then";
+				close_box();
+				print_stmts fmt stmts;
+			close_box(); print_cut();
+			kwd "fi";
+		close_box();
 
 	| Ifthenelse (expr, thenStmts, elseStmts) ->
-		open_vbox indent;
-			open_box 0;
-				kwd "if"; print_space();
-				print_expr fmt expr; print_space();
-				kwd "then";
+		open_vbox 0;
+			open_vbox indent;
+				open_box 0;
+					kwd "if"; print_space();
+					print_expr fmt expr; print_space();
+					kwd "then";
+				close_box();
+				print_stmts fmt thenStmts;
 			close_box();
-			print_stmts fmt thenStmts;
-		close_box(); print_cut();
-		open_vbox indent;
-			kwd "else";
-			print_stmts fmt elseStmts;
-		close_box(); close_box(); print_cut();
-		kwd "fi";
+			print_cut();
+			open_vbox indent;
+				kwd "else";
+				print_stmts fmt elseStmts;
+			close_box();
+			print_cut();
+			kwd "fi";
+		close_box();
 
 	| While (expr, stmts) ->
-		open_vbox indent;
-			open_box 0;
-				kwd "while"; print_space();
-				print_expr fmt expr; print_space(); kwd "do";
-			close_box();
-			print_stmts fmt stmts;
-		close_box(); close_box(); print_cut();
-		kwd "od";
+		open_vbox 0;
+			open_vbox indent;
+				open_box 0;
+					kwd "while"; print_space();
+					print_expr fmt expr; print_space(); kwd "do";
+				close_box();
+				print_stmts fmt stmts;
+			close_box(); print_cut();
+			kwd "od";
+		close_box();
 
 	| Proccall (ident, exprs) ->
 		id ident; kwd "(";
 		print_expr_list fmt exprs;
 		kwd ");";
-		close_box();
 
 and print_rvalue fmt rvalue =
 	match rvalue with
