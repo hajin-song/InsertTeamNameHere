@@ -110,33 +110,24 @@ and print_ranges fmt ranges =
 
 and print_paren fmt expr = kwd fmt "("; print_expr fmt expr; kwd fmt ")";
 
+and print_binop_expr fmt op expr =
+ match expr with
+  | Eunop (op1, expr2) ->
+   if (SnackPrecMap.find (Unop op1) precs) <= (SnackPrecMap.find (Binop op) precs) then
+    print_paren fmt expr
+   else
+    print_expr fmt expr2;
+  | Ebinop (expr2, op1, exrp3) ->
+   if SnackPrecMap.find (Binop op1) precs <= SnackPrecMap.find (Binop op) precs then
+    print_paren fmt expr
+   else
+    print_expr fmt expr;
+  | _ -> print_expr fmt expr;
 
-and print_binop_expr fmt expr1 op expr2 =
- match expr1 with
-  | Eunop (op1, expr3) ->
-   if (SnackPrecMap.find (Unop op1) precs) < (SnackPrecMap.find (Binop op) precs) then
-    print_paren fmt expr1
-   else
-    print_expr fmt expr1;
-  | Ebinop (expr3, op1, exrp4) ->
-   if SnackPrecMap.find (Binop op1) precs < SnackPrecMap.find (Binop op) precs then
-    print_paren fmt expr1
-   else
-    print_expr fmt expr1;
-  | _ -> print_expr fmt expr1;
+and print_binop_exprs fmt expr1 op expr2 =
+ print_binop_expr fmt op expr1;
  print_space(); print_binop fmt op; print_space();
- match expr2 with
-  | Eunop (op1, expr3) ->
-   if (SnackPrecMap.find (Unop op1) precs) < (SnackPrecMap.find (Binop op) precs) then
-    print_paren fmt expr2
-   else
-    print_expr fmt expr2;
-  | Ebinop (expr3, op1, exrp4) ->
-   if SnackPrecMap.find (Binop op1) precs < SnackPrecMap.find (Binop op) precs then
-    print_paren fmt expr2
-   else
-    print_expr fmt expr2;
-  | _ -> print_expr fmt expr2;
+ print_binop_expr fmt op expr2;
 
 and print_exprs fmt exprs =
 	match exprs with
@@ -151,7 +142,7 @@ and print_expr fmt expr =
 	| Eint value -> pInt fmt value;
 	| Efloat value -> pFloat fmt value;
 	| EId value -> id fmt value;
-	| Ebinop (expr1, op, expr2) -> print_binop_expr fmt expr1 op expr2
+	| Ebinop (expr1, op, expr2) -> print_binop_exprs fmt expr1 op expr2
 	| Eunop (op, expr1) ->
 		print_unop fmt op;
 		print_expr fmt expr1;

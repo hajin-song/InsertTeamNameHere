@@ -19,7 +19,7 @@ if n = 1 then
     out := x;
 else 
     power(x*x, n/2, res);
-    if (5>10) and ((1 * 2) and (4 + 5)) then 
+    if 2*(n/2) = n then 
         out := res;        # n was even
     else 
         out := x * res;    # n was odd
