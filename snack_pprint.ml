@@ -90,12 +90,6 @@ and print_ranges fmt ranges =
 		print_ranges fmt tail;
 	| [] -> ();
 
-and print_binop_expr fmt op expr =
- match op with
-  | Op_mul -> kwd fmt "("; print_expr fmt expr; kwd fmt ")";
-  | Op_div -> kwd fmt "("; print_expr fmt expr; kwd fmt ")";
-  | _ -> print_expr fmt expr
-  
 and print_exprs fmt exprs =
 	match exprs with
 	| [] -> ()
@@ -112,7 +106,7 @@ and print_expr fmt expr =
 	| Ebinop (expr1, op, expr2) ->
 		print_expr fmt expr1; print_space();
 		print_binop fmt op; print_space();
-		print_binop_expr fmt op expr2;
+		print_expr fmt expr2;
 	| Eunop (op, expr1) ->
 		print_unop fmt op;
 		print_expr fmt expr1;
@@ -187,7 +181,7 @@ and print_stmt fmt stmt =
 
 	| WriteS str ->
 		kwd fmt "write"; print_space();
-		id fmt str; kwd fmt ";";
+		kwd fmt "\""; id fmt str; kwd fmt "\""; kwd fmt ";";
 
 	| Ifthen (expr, stmts) ->
 		open_vbox 0;
