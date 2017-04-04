@@ -27,10 +27,6 @@ type unop =
   | Op_minus
   | Op_not
 
-type paren =
-  | L_paren
-  | R_paren
-
 type argument =
   | Val of typedef
   | Ref of typedef

@@ -47,14 +47,14 @@ typespec :
   | INT { Int }
   | FLOAT { Float }
 
-header :
+header : 
   | IDENT LPAREN arguments RPAREN { ($1, List.rev $3) }
 
 argument :
   | REF typespec IDENT { Ref ($3, $2) }
   | VAL typespec IDENT { Val ($3, $2) }
 
-arguments :
+arguments : 
   | arguments COMMA argument { $3 :: $1 }
   | argument { [$1] }
   | { [] }
