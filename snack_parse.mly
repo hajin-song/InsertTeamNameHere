@@ -7,6 +7,7 @@ open Snack_ast
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
 %token <string> IDENT
+%token <string> STRING
 %token PROC VAL REF END
 %token BOOL INT FLOAT
 %token WRITE READ
@@ -87,7 +88,7 @@ stmt :
 stmt_body:
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
-  | WRITE QUOTE IDENT QUOTE { WriteS $3 }
+  | WRITE STRING { WriteS $2 }
   | lvalue ASSIGN rvalue { Assign ($1, $3) }
   | IDENT LPAREN expr_list RPAREN { Proccall ($1, $3) }
 
