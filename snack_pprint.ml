@@ -1,12 +1,11 @@
 open Snack_ast
 open Format
 
-let id = print_string;;
-let kwd = print_string;;
-let pInt = print_int;;
-let pFloat = print_float;;
-let pBool = print_bool;;
-let d = ref 1;;
+let id fmt ident = fprintf fmt "%s" ident;;
+let kwd fmt s = fprintf fmt "%s" s;;
+let pInt fmt i = fprintf fmt "%i" i;;
+let pFloat fmt f = fprintf fmt "%f" f;;
+let pBool fmt b= fprintf fmt "%B" b;;
 let indent = 4;;
 
 
@@ -21,15 +20,15 @@ let rec print_program fmt prog =
 			print_cut();
 			print_stmts fmt stmts;
 		close_box(); print_cut();
-		kwd "end"; print_cut(); print_cut();
+		kwd fmt "end"; print_cut(); print_cut();
 		print_program fmt tail;
 	close_box();
 
 and print_header fmt (ident, args) =
 	open_box 0;
-		kwd "proc"; print_space();
-		id ident; print_space(); kwd "(";
-		print_args fmt args; kwd ")";
+		kwd fmt "proc"; print_space();
+		id fmt ident; print_space(); kwd fmt "(";
+		print_args fmt args; kwd fmt ")";
 	close_box();
 
 and print_args fmt args =
@@ -38,26 +37,26 @@ and print_args fmt args =
 		print_arg fmt arg;
 	| arg :: tail ->
 		print_arg fmt arg;
-		kwd ","; print_space();
+		kwd fmt ","; print_space();
 		print_args fmt tail;
 	| [] -> ();
 
 and print_arg fmt arg =
 	match arg with
 	| Val (ident, t) ->
-		kwd "val"; print_space();
+		kwd fmt "val"; print_space();
 		print_type fmt t; print_space();
-		id ident;
-	| Ref (ident, t) -> 
-		kwd "ref"; print_space();
+		id fmt ident;
+	| Ref (ident, t) ->
+		kwd fmt "ref"; print_space();
 		print_type fmt t; print_space();
-		id ident;
+		id fmt ident;
 
 and print_type fmt t =
 	match t with
-	| Bool  -> kwd "bool"
-	| Int -> kwd "int"
-	| Float -> kwd "float"
+	| Bool  -> kwd fmt "bool"
+	| Int -> kwd fmt "int"
+	| Float -> kwd fmt "float"
 
 and print_decls fmt decls =
 	match decls with
@@ -71,26 +70,32 @@ and print_decls fmt decls =
 and print_decl fmt decl =
 	match decl with
 	| Dvar (t, ident) ->
-		print_type fmt t; print_space(); id ident; kwd ";";
+		print_type fmt t; print_space(); id fmt ident; kwd fmt ";";
 
 	| Darr (t, ident, ranges) ->
 		print_type fmt t;
 		print_space();
-		id ident; kwd "[";
+		id fmt ident; kwd fmt "[";
 		print_ranges fmt ranges;
-		kwd "]";
-		kwd ";";
+		kwd fmt "]";
+		kwd fmt ";";
 
 and print_ranges fmt ranges =
 	match ranges with
 	| (r1, r2) :: [] ->
-		pInt r1; kwd ".."; pInt r2;
+		pInt fmt r1; kwd fmt ".."; pInt fmt r2;
 	| (r1, r2) :: tail ->
-		pInt r1; kwd ".."; pInt r2;
-		kwd ","; print_space();
+		pInt fmt r1; kwd fmt ".."; pInt fmt r2;
+		kwd fmt ","; print_space();
 		print_ranges fmt tail;
 	| [] -> ();
 
+and print_binop_expr fmt op expr =
+ match op with
+  | Op_mul -> kwd fmt "("; print_expr fmt expr; kwd fmt ")";
+  | Op_div -> kwd fmt "("; print_expr fmt expr; kwd fmt ")";
+  | _ -> print_expr fmt expr
+  
 and print_exprs fmt exprs =
 	match exprs with
 	| [] -> ()
@@ -100,22 +105,22 @@ and print_exprs fmt exprs =
 
 and print_expr fmt expr =
 	match expr with
-	| Ebool value -> pBool value;
-	| Eint value -> pInt value;
-	| Efloat value -> pFloat value;
-	| EId value -> id value;
+	| Ebool value -> pBool fmt value;
+	| Eint value -> pInt fmt value;
+	| Efloat value -> pFloat fmt value;
+	| EId value -> id fmt value;
 	| Ebinop (expr1, op, expr2) ->
 		print_expr fmt expr1; print_space();
 		print_binop fmt op; print_space();
-		print_expr fmt expr2;
+		print_binop_expr fmt op expr2;
 	| Eunop (op, expr1) ->
 		print_unop fmt op;
 		print_expr fmt expr1;
 	| Earray (ident, exprs) ->
-		id ident;
-		kwd "[";
+		id fmt ident;
+		kwd fmt "[";
 		print_expr_list fmt exprs;
-		kwd "]";
+		kwd fmt "]";
 
 and print_expr_list fmt exprs =
 	match exprs with
@@ -123,37 +128,37 @@ and print_expr_list fmt exprs =
 		print_expr fmt expr;
 	| expr :: tail ->
 		print_expr fmt expr;
-		kwd ",";
+		kwd fmt ",";
 		print_space();
 		print_expr_list fmt tail;
 	| [] -> ();
 
 and print_binop fmt op =
 	match op with
-	| Op_add -> kwd "+";
-	| Op_sub -> kwd "-";
-	| Op_mul -> kwd "*";
-	| Op_div -> kwd "/";
-	| Op_eq -> kwd "=";
-	| Op_neq -> kwd "!=";
-	| Op_lt -> kwd "<";
-	| Op_gt -> kwd ">";
-	| Op_gteq -> kwd ">=";
-	| Op_lteq -> kwd "<=";
-	| Op_or -> kwd "or";
-	| Op_and -> kwd "and";
+	| Op_add -> kwd fmt "+";
+	| Op_sub -> kwd fmt "-";
+	| Op_mul -> kwd fmt "*";
+	| Op_div -> kwd fmt "/";
+	| Op_eq -> kwd fmt "=";
+	| Op_neq -> kwd fmt "!=";
+	| Op_lt -> kwd fmt "<";
+	| Op_gt -> kwd fmt ">";
+	| Op_gteq -> kwd fmt ">=";
+	| Op_lteq -> kwd fmt "<=";
+	| Op_or -> kwd fmt "or";
+	| Op_and -> kwd fmt "and";
 
 and print_unop fmt op =
 	match op with
-	| Op_not -> kwd "not"; print_space();
-	| Op_minus -> kwd "-";
+	| Op_not -> kwd fmt "not"; print_space();
+	| Op_minus -> kwd fmt "-";
 
 and print_lvalue fmt value =
 	match value with
-	| LId ident -> id ident;
+	| LId ident -> id fmt ident;
 	| Larray (ident, exprs) ->
-		id ident; kwd "[";
-		print_expr_list fmt exprs; kwd "]";
+		id fmt ident; kwd fmt "[";
+		print_expr_list fmt exprs; kwd fmt "]";
 
 and print_stmts fmt stmts =
 	match stmts with
@@ -168,70 +173,70 @@ and print_stmt fmt stmt =
 	match stmt with
 	| Assign (lvalue, rvalue) ->
 		print_lvalue fmt lvalue; print_space();
-		kwd ":="; print_space();
+		kwd fmt ":="; print_space();
 		print_rvalue fmt rvalue;
-		kwd ";";
+		kwd fmt ";";
 
 	| Read lvalue ->
-		kwd "read"; print_space();
-		print_lvalue fmt lvalue; kwd ";";
+		kwd fmt "read"; print_space();
+		print_lvalue fmt lvalue; kwd fmt ";";
 
 	| Write expr ->
-		kwd "write"; print_space();
-		print_expr fmt expr; kwd ";";
+		kwd fmt "write"; print_space();
+		print_expr fmt expr; kwd fmt ";";
 
 	| WriteS str ->
-		kwd "write"; print_space();
-		id str; kwd ";";
+		kwd fmt "write"; print_space();
+		id fmt str; kwd fmt ";";
 
 	| Ifthen (expr, stmts) ->
 		open_vbox 0;
 			open_vbox indent;
 				open_box 0;
-					kwd "if"; print_space();
+					kwd fmt "if"; print_space();
 					print_expr fmt expr; print_space();
-					kwd "then";
+					kwd fmt "then";
 				close_box();
 				print_stmts fmt stmts;
 			close_box(); print_cut();
-			kwd "fi";
+			kwd fmt "fi";
 		close_box();
 
 	| Ifthenelse (expr, thenStmts, elseStmts) ->
 		open_vbox 0;
 			open_vbox indent;
 				open_box 0;
-					kwd "if"; print_space();
+					kwd fmt "if"; print_space();
 					print_expr fmt expr; print_space();
-					kwd "then";
+					kwd fmt "then";
 				close_box();
 				print_stmts fmt thenStmts;
 			close_box();
 			print_cut();
 			open_vbox indent;
-				kwd "else";
+				kwd fmt "else";
 				print_stmts fmt elseStmts;
 			close_box();
 			print_cut();
-			kwd "fi";
+			kwd fmt "fi";
 		close_box();
 
 	| While (expr, stmts) ->
 		open_vbox 0;
 			open_vbox indent;
 				open_box 0;
-					kwd "while"; print_space();
-					print_expr fmt expr; print_space(); kwd "do";
+					kwd fmt "while"; print_space();
+					print_expr fmt expr; print_space(); kwd fmt "do";
 				close_box();
 				print_stmts fmt stmts;
 			close_box(); print_cut();
-			kwd "od";
+			kwd fmt "od";
 		close_box();
 
 	| Proccall (ident, exprs) ->
-		id ident; kwd "(";
+		id fmt ident; kwd fmt "(";
 		print_expr_list fmt exprs;
-		kwd ");";
+		kwd fmt ");";
 
 and print_rvalue fmt rvalue =
 	match rvalue with
