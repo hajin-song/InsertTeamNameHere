@@ -1,8 +1,16 @@
+(*
+ * snick_parse.mly
+ * Parser for SNACK language
+ * Skeleton provided as part of assignment
+ * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
+ * Last Modified: 08-APR-2017
+ *)
+
 /* ocamlyacc parser for bean */
 %{
 open Snick_ast
 %}
-
+(* TOKENS *)
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
@@ -21,6 +29,7 @@ open Snick_ast
 %token SEMICOLON COMMA QUOTE
 %token EOF
 
+(* OPERATOR PRECEDENT *)
 %left OR
 %left AND
 %left NOT
@@ -47,14 +56,14 @@ typespec :
   | INT { Int }
   | FLOAT { Float }
 
-header : 
+header :
   | IDENT LPAREN arguments RPAREN { ($1, List.rev $3) }
 
 argument :
   | REF typespec IDENT { Ref ($3, $2) }
   | VAL typespec IDENT { Val ($3, $2) }
 
-arguments : 
+arguments :
   | arguments COMMA argument { $3 :: $1 }
   | argument { [$1] }
   | { [] }
@@ -108,6 +117,7 @@ arr_list:
   | arr_list COMMA expr { $3 :: $1 }
   | expr { [$1] }
 
+(* Operator altered to include their precendents and associations*)
 expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }

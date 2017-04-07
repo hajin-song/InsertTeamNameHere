@@ -1,10 +1,25 @@
+(*
+ * snick_pprint.ml
+ * Pretty Printer for the SNACK language
+ * Skeleton provided as part of assignment
+ * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
+ * Last Modified: 08-APR-2017
+ *)
+
 open Snick_ast
 open Format
 
+(* Indentation uses 4 spaces *)
 let indent = 4;;
 
+(* print_program
+	* entry for the pretty printer
+	* fmt: formatter
+	* prog: Parsed Snack program to be pretty printed
+	*)
 let rec print_program fmt prog =
 	open_vbox 0;
+	(* Treating program as list of procedures *)
 	match prog with
 	| [] -> ()
 	| {header = header; decls = decls; stmts = stmts} :: tail ->
@@ -18,15 +33,29 @@ let rec print_program fmt prog =
 		print_program fmt tail;
 	close_box();
 
+(* print_header
+	* prints the procedure header
+	* fmt: formatter
+	* signature: identifier and list of arguments
+	*)
 and print_header fmt (ident, args) =
-		fprintf fmt "proc %s (%s)" ident (String.concat ", " (get_args args))
+	(* get arguments as list and concatenate them using comma *)
+	fprintf fmt "proc %s (%s)" ident (String.concat ", " (get_args args))
 
+(* get_args
+	* recursively collect arguemnts and convert into list of args
+	* args: list of argument
+	*)
 and get_args args =
 	match args with
 	| [] -> [];
 	| arg :: tail ->
 		arg_string arg :: get_args tail;
 
+(* arg_string
+	* convert parsed argument into string
+	* arg: argument to convert to string
+	*)
 and arg_string arg =
 	match arg with
 	| Val (ident, t) ->
@@ -34,34 +63,59 @@ and arg_string arg =
 	| Ref (ident, t) ->
 		sprintf "ref %s %s" (type_string t) ident
 
+(*
+	* type_string
+	* convert parsed type into string
+	* t: type to convert to string
+	*)
 and type_string t =
 	match t with
 	| Bool  -> "bool"
 	| Int -> "int"
 	| Float -> "float"
 
+(*	print_decls
+	* recursively print declarations, treating it as list
+	* fmt: formatter
+	* decls: list of parsed declarations
+	*)
 and print_decls fmt decls =
 	match decls with
 	| [] -> ()
 	| decl :: tail ->
-		print_decl fmt decl;
-		print_decls fmt tail;
+		print_decl fmt decl; print_decls fmt tail;
 
+(* print_decl
+	*	print a declaration as string
+	* fmt: foramtter
+	* decl: declaration to print as string
+	*)
 and print_decl fmt decl =
 	match decl with
 	| Dvar (t, ident) ->
 		fprintf fmt "@,%s %s;" (type_string t) ident;
 	| Darr (t, ident, ranges) ->
 		fprintf fmt "@,%s %s[%s];" (type_string t)
-									ident
-								   (String.concat ", " (get_ranges ranges));
+																													ident
+								   																		(String.concat ", " (get_ranges ranges));
 
+(* get_ranges
+	* recursively convert ranges into string
+	* ranges: ranges to convert
+	*)
 and get_ranges ranges =
 	match ranges with
 	| [] -> []
 	| (r1, r2) :: tail ->
 		sprintf "%i..%i" r1 r2 :: get_ranges tail
 
+(*	print_with_assoc
+	* Prints operation with parentheses preserved
+	* expr: expression
+	* prec1: precendent of the nearby operation
+	*								position of the operation in question
+	*								changes based on the expr's placement
+	*)
 and print_with_assoc expr prec1 =
 	match expr with
 	| Ebinop (_, (_, prec2, _), _) ->
@@ -72,6 +126,11 @@ and print_with_assoc expr prec1 =
 		else expr_string expr
 	| _ -> expr_string expr
 
+(*	print_without_assoc
+	*	same as print_with_assoc except the parentheses are
+	* preserved if and only if op1's precedence explictly
+	* preceeds op2's precedence
+	*)
 and print_without_assoc expr prec1 =
 	match expr with
 	| Ebinop (_, (_, prec2, _), _) ->
@@ -82,7 +141,14 @@ and print_without_assoc expr prec1 =
 		else expr_string expr
 	| _ -> expr_string expr
 
+(*	print_binop_Expr
+	*	prints expr with binary operator
+	* exprl: expression on left hand side
+	* binop: contains operator, precedence and association
+	* exprr: expression on right hand side
+	*)
 and print_binop_expr exprl (op, prec, assoc) exprr =
+	(* parenthese preservation is affected by the operator's association *)
 	match assoc with
 	| Left_assoc ->
 		sprintf "%s %s %s" (print_without_assoc exprl prec)
@@ -97,6 +163,12 @@ and print_binop_expr exprl (op, prec, assoc) exprr =
 						   (binop_string op)
 						   (expr_string exprr)
 
+(* print_unop_expr
+	* same as print_binop_expr except for unary operator
+	* unary operator only has expr (right hand side expression)
+	* unop: contains operator, precedence and association
+	* expr: expression on right hand side
+	*)
 and print_unop_expr (op, prec, assoc) expr =
 	match assoc with
 	| Left_assoc ->	sprintf "%s %s" (unop_string op)
@@ -105,6 +177,10 @@ and print_unop_expr (op, prec, assoc) expr =
 									 (print_without_assoc expr prec)
 	| _ -> sprintf "%s %s" (unop_string op) (expr_string expr)
 
+(* expr_string
+	* converts parsed expression as string
+	* expr: expression to convert to string
+	*)
 and expr_string expr =
 	match expr with
 	| Ebool value -> sprintf "%B" value
@@ -116,12 +192,20 @@ and expr_string expr =
 	| Earray (ident, exprs) ->
 		sprintf "%s[%s]" ident (String.concat ", " (expr_list_string exprs));
 
+(* expr_list_string
+	* recursively convert expressions into string form
+	* exprs: expressions to convert
+	*)
 and expr_list_string exprs =
 	match exprs with
 	| [] -> []
 	| expr :: tail ->
-		expr_string expr :: expr_list_string tail
+	expr_string expr :: expr_list_string tail
 
+(* binop_string
+	* binary operators string representation
+	* op: operator to format
+	*)
 and binop_string op =
 	match op with
 	| Op_add -> "+";
@@ -137,17 +221,30 @@ and binop_string op =
 	| Op_or -> "or";
 	| Op_and -> "and";
 
+(* unop_string
+	* unary operators string representation
+	* op: operator to format
+	*)
 and unop_string op =
 	match op with
 	| Op_not -> "not";
 	| Op_minus -> "-";
 
+(*	lvalue_string
+	*	convert lvalue to string representation
+	* value: value to convert
+	*)
 and lvalue_string value =
 	match value with
 	| LId ident -> ident
 	| Larray (ident, exprs) -> sprintf "%s[%s]" (ident)
 								(String.concat ", " (expr_list_string exprs))
 
+(* print_stmts
+	* recursively prints list of statements
+	* fmt: formatter
+	* stmts: list of statements
+	*)
 and print_stmts fmt stmts =
 	match stmts with
 	| [] -> ()
@@ -156,6 +253,11 @@ and print_stmts fmt stmts =
 		print_stmt fmt stmt;
 		print_stmts fmt tail;
 
+(*	print_stmt
+	*	convert parsed statement into string representation
+	* fmt: formatter
+	* stmt: statement
+	*)
 and print_stmt fmt stmt =
 	match stmt with
 	| Assign (lvalue, rvalue) ->
@@ -190,6 +292,10 @@ and print_stmt fmt stmt =
 	| Proccall (ident, exprs) ->
 		fprintf fmt "%s(%s);" ident (String.concat ", " (expr_list_string exprs))
 
+(* rvalue_string
+	*	convert rvalue to string representation
+	* revalue: value to convert
+	*)
 and rvalue_string rvalue =
 	match rvalue with
 	| Rexpr expr -> expr_string expr;

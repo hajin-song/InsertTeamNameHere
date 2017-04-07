@@ -1,3 +1,11 @@
+(*
+ * snick_lex_mll
+ * Lexical for SNACK language
+ * Skeleton provided as part of assignment
+ * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
+ * Last Modified: 06-APR-2017
+ *)
+
 {
 open Snick_parse
 }
@@ -8,9 +16,9 @@ let alnum = alpha | '_' | '\'' | digit
 let digits = digit+
 let ident = (alpha | '_') alnum*
 rule token = parse
-    [' ' '\t']                      { token lexbuf }     (* skip blanks *)
+    [' ' '\t']                      { token lexbuf }                          (* skip blanks *)
   | '#'[^'\n']*'\n'                 { Lexing.new_line lexbuf ; token lexbuf } (* skip comments *)
-  | '\"'([^'\n' '\"']* as lxm)'\"'  { STRING(lxm) }
+  | '\"'([^'\n' '\"']* as lxm)'\"'  { STRING(lxm) }                           (* Strings *)
   | '\n'                            { Lexing.new_line lexbuf ; token lexbuf }
   | '-'?digit+ as lxm               { INT_CONST(int_of_string lxm) }
   | '-'?digit+'.'digit+ as lxm      { FLOAT_CONST(float_of_string lxm) }
