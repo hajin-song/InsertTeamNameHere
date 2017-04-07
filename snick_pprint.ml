@@ -1,37 +1,20 @@
-open Snack_ast
+open Snick_ast
 open Format
 
 let id fmt ident = fprintf fmt "%s" ident;;
 let kwd fmt s = fprintf fmt "%s" s;;
 let pInt fmt i = fprintf fmt "%i" i;;
 let pFloat fmt f = fprintf fmt "%f" f;;
-let pBool fmt b= fprintf fmt "%B" b;;
+let pBool fmt b = fprintf fmt "%B" b;;
 let indent = 4;;
 
-type op = Binop of Snack_ast.binop | Unop of Snack_ast.unop;;
-
-module SnackPrecMap = Map.Make(struct type t = op let compare = compare end)
-let precs = SnackPrecMap.empty;;
-let precs = SnackPrecMap.add (Binop Op_or) 1 precs;;
-let precs = SnackPrecMap.add (Binop Op_and) 2 precs;;
-let precs = SnackPrecMap.add (Unop Op_not) 3 precs;;
-let precs = SnackPrecMap.add (Binop Op_eq) 4 precs;;
-let precs = SnackPrecMap.add (Binop Op_neq) 4 precs;;
-let precs = SnackPrecMap.add (Binop Op_lt) 4 precs;;
-let precs = SnackPrecMap.add (Binop Op_gt) 4 precs;;
-let precs = SnackPrecMap.add (Binop Op_gteq) 4 precs;;
-let precs = SnackPrecMap.add (Binop Op_lteq) 4 precs;;
-let precs = SnackPrecMap.add (Binop Op_add) 5 precs;;
-let precs = SnackPrecMap.add (Binop Op_sub) 5 precs;;
-let precs = SnackPrecMap.add (Binop Op_mul) 6 precs;;
-let precs = SnackPrecMap.add (Binop Op_div) 6 precs;;
-let precs = SnackPrecMap.add (Unop Op_minus) 7 precs;;
+type op = Binop of Snick_ast.binop | Unop of Snick_ast.unop;;
 
 let rec print_program fmt prog =
 	open_vbox 0;
 	match prog with
 	| [] -> ()
-	| {header; decls; stmts} :: tail ->
+	| {header = header; decls = decls; stmts = stmts} :: tail ->
 		open_vbox indent;
 			print_header fmt header;
 			print_decls fmt decls;
@@ -108,26 +91,63 @@ and print_ranges fmt ranges =
 		print_ranges fmt tail;
 	| [] -> ();
 
+and print_with_assoc fmt expr prec1 =
+	match expr with
+	| Ebinop (_, (_, prec2, _), _) ->
+		if prec2 <= prec1 then print_paren fmt expr
+		else print_expr fmt expr
+	| Eunop ((_, prec2, _), _) ->
+		if prec2 <= prec1 then print_paren fmt expr
+		else print_expr fmt expr
+	| _ -> print_expr fmt expr
+
+and print_without_assoc fmt expr prec1 =
+	match expr with
+	| Ebinop (_, (_, prec2, _), _) ->
+		if prec2 < prec1 then print_paren fmt expr
+		else print_expr fmt expr
+	| Eunop ((_, prec2, _), _) ->
+		if prec2 < prec1 then print_paren fmt expr
+		else print_expr fmt expr
+	| _ -> print_expr fmt expr
+
 and print_paren fmt expr = kwd fmt "("; print_expr fmt expr; kwd fmt ")";
 
-and print_binop_expr fmt op expr =
- match expr with
-  | Eunop (op1, expr2) ->
-   if (SnackPrecMap.find (Unop op1) precs) <= (SnackPrecMap.find (Binop op) precs) then
-    print_paren fmt expr
-   else
-    print_expr fmt expr2;
-  | Ebinop (expr2, op1, exrp3) ->
-   if SnackPrecMap.find (Binop op1) precs <= SnackPrecMap.find (Binop op) precs then
-    print_paren fmt expr
-   else
-    print_expr fmt expr;
-  | _ -> print_expr fmt expr;
+and print_binop_expr fmt exprl (op, prec, assoc) exprr =
+	match assoc with
+	| Left_assoc ->
+		print_without_assoc fmt exprl prec;
+		print_space();
+		print_binop fmt op;
+		print_space();
+		print_with_assoc fmt exprr prec;
+	| Right_assoc ->
+		print_with_assoc fmt exprl prec;
+		print_space();
+		print_binop fmt op;
+		print_space();
+		print_without_assoc fmt exprr prec;
+	| _ ->
+		print_expr fmt exprl;
+		print_space();
+		print_binop fmt op;
+		print_space();
+		print_expr fmt exprr;
 
-and print_binop_exprs fmt expr1 op expr2 =
- print_binop_expr fmt op expr1;
- print_space(); print_binop fmt op; print_space();
- print_binop_expr fmt op expr2;
+and print_unop_expr fmt (op, prec, assoc) expr =
+	match assoc with
+	| Left_assoc ->
+		print_unop fmt op;
+		print_space();
+		print_with_assoc fmt expr prec;
+	| Right_assoc ->
+		print_unop fmt op;
+		print_space();
+		print_without_assoc fmt expr prec;
+	| _ ->
+		print_unop fmt op;
+		print_space();
+		print_expr fmt expr;
 
 and print_exprs fmt exprs =
 	match exprs with
@@ -142,16 +162,14 @@ and print_expr fmt expr =
 	| Eint value -> pInt fmt value;
 	| Efloat value -> pFloat fmt value;
 	| EId value -> id fmt value;
-	| Ebinop (expr1, op, expr2) -> print_binop_exprs fmt expr1 op expr2
-	| Eunop (op, expr1) ->
-		print_unop fmt op;
-		print_expr fmt expr1;
+	| Ebinop (expr1, op, expr2) -> print_binop_expr fmt expr1 op expr2
+	| Eunop (op, expr1) -> print_unop_expr fmt op expr1;
 	| Earray (ident, exprs) ->
 		id fmt ident;
 		kwd fmt "[";
 		print_expr_list fmt exprs;
 		kwd fmt "]";
- | Eparen expr1 -> print_expr fmt expr1;
+ 	| Eparen expr1 -> print_expr fmt expr1;
 
 
 and print_expr_list fmt exprs =
@@ -182,7 +200,7 @@ and print_binop fmt op =
 
 and print_unop fmt op =
 	match op with
-	| Op_not -> kwd fmt "not"; print_space();
+	| Op_not -> kwd fmt "not";
 	| Op_minus -> kwd fmt "-";
 
 and print_lvalue fmt value =

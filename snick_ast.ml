@@ -9,7 +9,7 @@ type beantype =
 
 type typedef = (ident * beantype)
 
-type binop =
+type binop_type =
   | Op_add
   | Op_sub
   | Op_mul
@@ -23,9 +23,27 @@ type binop =
   | Op_or
   | Op_and
 
-type unop =
+type unop_type = 
   | Op_minus
   | Op_not
+
+type op_prec =
+  | Prec_or
+  | Prec_and
+  | Prec_not
+  | Prec_eq
+  | Prec_addsub
+  | Prec_muldiv
+  | Prec_uminus
+
+type op_assoc =
+  | Left_assoc
+  | Right_assoc
+  | Non_assoc
+
+type binop = (binop_type * op_prec * op_assoc)
+
+type unop = (unop_type * op_prec * op_assoc)
 
 type argument =
   | Val of typedef

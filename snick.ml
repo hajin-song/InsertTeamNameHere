@@ -1,4 +1,4 @@
-module P = Snack_parse
+module P = Snick_parse
 
 (* Argument parsing code *)
 let infile_name = ref None
@@ -27,10 +27,10 @@ let main () =
   (* Initialize lexing buffer *)
   let lexbuf = Lexing.from_channel infile in
   (* Call the parser *)
-  let prog = Snack_parse.program Snack_lex.token lexbuf in
+  let prog = Snick_parse.program Snick_lex.token lexbuf in
   match !mode with
   | PrettyPrint ->
-    Snack_pprint.print_program Format.std_formatter prog 
+    Snick_pprint.print_program Format.std_formatter prog 
   | Compile -> ()
 
 let _ = main ()
