@@ -37,8 +37,8 @@ end
 proc q (val float x, ref int k)
 	int n;
 	float y;
-	bool a[1..8];
+	bool a[1..8,0..4,2..5];
 	a[8] := true;
 	k := 42;
-	write not (true and not((1+3)*((2+3)-x) = ((a+3)*3)));
+	write not (true and (not((1+3)*((2+3)-x) = ((a+3)*3))));
 end
