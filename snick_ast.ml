@@ -44,7 +44,6 @@ type op_assoc =
 type binop = (binop_type * op_prec * op_assoc)
 
 type unop = (unop_type * op_prec * op_assoc)
-
 type argument =
   | Val of typedef
   | Ref of typedef
@@ -59,7 +58,6 @@ type expr =
   | Ebinop of (expr * binop * expr)
   | Eunop of (unop * expr)
   | Earray of (ident * expr list)
-  | Eparen of expr
 
 type lvalue =
   | LId of ident

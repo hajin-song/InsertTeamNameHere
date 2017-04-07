@@ -8,7 +8,6 @@ let pFloat fmt f = fprintf fmt "%f" f;;
 let pBool fmt b = fprintf fmt "%B" b;;
 let indent = 4;;
 
-type op = Binop of Snick_ast.binop | Unop of Snick_ast.unop;;
 
 let rec print_program fmt prog =
 	open_vbox 0;
@@ -169,8 +168,6 @@ and print_expr fmt expr =
 		kwd fmt "[";
 		print_expr_list fmt exprs;
 		kwd fmt "]";
- 	| Eparen expr1 -> print_expr fmt expr1;
-
 
 and print_expr_list fmt exprs =
 	match exprs with
@@ -237,7 +234,7 @@ and print_stmt fmt stmt =
 
 	| WriteS str ->
 		kwd fmt "write"; print_space();
-		id fmt str; kwd fmt ";";
+		kwd fmt "\""; id fmt str; kwd fmt "\""; kwd fmt ";";
 
 	| Ifthen (expr, stmts) ->
 		open_vbox 0;
