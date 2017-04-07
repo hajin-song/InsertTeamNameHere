@@ -188,7 +188,7 @@ and print_stmt fmt stmt =
 		fprintf fmt "@]@,od@]";
 
 	| Proccall (ident, exprs) ->
-		fprintf fmt "%s(%s)" ident (String.concat ", " (expr_list_string exprs))
+		fprintf fmt "%s(%s);" ident (String.concat ", " (expr_list_string exprs))
 
 and rvalue_string rvalue =
 	match rvalue with
