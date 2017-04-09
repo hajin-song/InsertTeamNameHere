@@ -1,16 +1,15 @@
-(*
- * snick_parse.mly
+/* snick_parse.mly
  * Parser for SNACK language
  * Skeleton provided as part of assignment
  * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
  * Last Modified: 08-APR-2017
- *)
+ */
 
 /* ocamlyacc parser for bean */
 %{
 open Snick_ast
 %}
-(* TOKENS *)
+/* TOKENS */
 %token <bool> BOOL_CONST
 %token <int> INT_CONST
 %token <float> FLOAT_CONST
@@ -29,7 +28,7 @@ open Snick_ast
 %token SEMICOLON COMMA QUOTE
 %token EOF
 
-(* OPERATOR PRECEDENT *)
+/* OPERATOR PRECEDENT */
 %left OR
 %left AND
 %left NOT
@@ -117,7 +116,7 @@ arr_list:
   | arr_list COMMA expr { $3 :: $1 }
   | expr { [$1] }
 
-(* Operator altered to include their precendents and associations*)
+/* Operator altered to include their precendents and associations*/
 expr:
   | BOOL_CONST { Ebool $1 }
   | INT_CONST { Eint $1 }

@@ -2,12 +2,12 @@
 # It will terminate for some input, but in many cases it won't.
 
 proc q ( val    float x
-       , ref int      k
-       )
+       , ref int      k,
+	ref			int 	z		)
 int n; float y;
 bool a[1..8];
 a[8] := true;
-k := 42;
+		k := 42;
 end
 
 proc p (ref int i)
@@ -17,14 +17,22 @@ proc main ()
 int m;
 int n;
   read n;
+	if p(n) then 
+		n := 10;
+	else 
+		q(n, m,n); n:=20;
+	fi
   while n>1 do
     m := n;
     while m>0 do
           if m>0 then
+		while n < m do
+	n := 1 + ((((10 + (n - 10))) + 2)*1);	
+	if n = 100 then n:= 0; fi	
+od
               n := n - 1;
               m := m - 1;
               if m=0 then p(n); fi
        else   m := n - m; m := m - 1  ;
 fi od od
 end
-
