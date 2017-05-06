@@ -1,7 +1,7 @@
 TARGETS = snick
 TARGETS_BYTE=$(TARGETS:%=%.byte)
 
-MODULES = snick_ast snick_lex snick_parse snick_pprint
+MODULES = snick_ast snick_lex snick_parse snick_pprint symbol analyze codegen
 MLFILES = $(addsuffix .ml, $(MODULES))
 CMOFILES = $(addsuffix .cmo, $(MODULES))
 CMXFILES = $(addsuffix .cmx, $(MODULES))
@@ -14,7 +14,7 @@ OCAMLDEP = ocamldep
 
 OCAMLFLAGS =
 
-all : opt byte
+all : clean opt byte
 byte: $(TARGETS_BYTE)
 opt: $(TARGETS)
 
@@ -41,7 +41,7 @@ snick : $(CMXFILES) snick.cmx
 
 clean :
 	rm -f *.cmo *.cmi *.cmx *.o
-	rm -f snick_lex.ml snick_parse.ml snick_parse.mli
+	rm -f snick_lex.ml snick_parse.ml snick_parse.mli snick snick.byte
 
 clobber : clean
 	rm -f $(TARGETS) $(TARGETS_BYTE)

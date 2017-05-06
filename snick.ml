@@ -31,6 +31,8 @@ let main () =
   match !mode with
   | PrettyPrint ->
     Snick_pprint.print_program Format.std_formatter prog 
-  | Compile -> ()
+  | Compile -> 
+    Analyze.semantic_analysis prog;
+    Codegen.generate prog;;
 
 let _ = main ()

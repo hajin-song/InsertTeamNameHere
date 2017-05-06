@@ -13,7 +13,7 @@ int n;
     write "\n";
 end
 
-proc power(val float x, val int n, ref float out)
+proc power(val float x, val int n, val float out)
 float res;
 if n = 1 then
     out := x;

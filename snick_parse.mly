@@ -8,6 +8,7 @@
 /* ocamlyacc parser for bean */
 %{
 open Snick_ast
+let expr_count = ref 0
 %}
 /* TOKENS */
 %token <bool> BOOL_CONST
@@ -97,11 +98,8 @@ stmt_body:
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
   | WRITE STRING { WriteS $2 }
-  | lvalue ASSIGN rvalue { Assign ($1, $3) }
+  | lvalue ASSIGN expr { Assign ($1, $3) }
   | IDENT LPAREN expr_list RPAREN { Proccall ($1, List.rev $3) }
-
-rvalue :
-  | expr { Rexpr $1 }
 
 lvalue:
   | IDENT { LId $1 }
@@ -122,20 +120,20 @@ expr:
   | INT_CONST { Eint $1 }
   | FLOAT_CONST { Efloat $1 }
   | IDENT { EId $1 }
-  | IDENT LBRACKET arr_list RBRACKET { Earray ($1, List.rev $3) }
+  | IDENT LBRACKET arr_list RBRACKET { incr expr_count; Earray ($1, List.rev $3, !expr_count) }
   /* Binary operators */
-  | expr PLUS expr { Ebinop ($1, (Op_add, Prec_addsub, Left_assoc), $3) }
-  | expr MINUS expr { Ebinop ($1, (Op_sub, Prec_addsub, Left_assoc), $3) }
-  | expr MUL expr { Ebinop ($1, (Op_mul, Prec_muldiv, Left_assoc), $3) }
-  | expr DIV expr { Ebinop ($1, (Op_div, Prec_muldiv, Left_assoc), $3) }
-  | expr EQ expr { Ebinop ($1, (Op_eq, Prec_eq, Non_assoc), $3) }
-  | expr NEQ expr { Ebinop ($1, (Op_neq, Prec_eq, Non_assoc), $3) }
-  | expr LT expr { Ebinop ($1, (Op_lt, Prec_eq, Non_assoc), $3) }
-  | expr GT expr { Ebinop ($1, (Op_gt, Prec_eq, Non_assoc), $3) }
-  | expr LTEQ expr { Ebinop ($1, (Op_lteq, Prec_eq, Non_assoc), $3) }
-  | expr GTEQ expr { Ebinop ($1, (Op_gteq, Prec_eq, Non_assoc), $3) }
-  | expr OR expr { Ebinop ($1, (Op_or, Prec_or, Left_assoc), $3) }
-  | expr AND expr { Ebinop ($1, (Op_and, Prec_and, Left_assoc), $3) }
-  | NOT expr { Eunop ((Op_not, Prec_not, Left_assoc), $2) }
-  | MINUS expr %prec UMINUS { Eunop ((Op_minus, Prec_uminus, Non_assoc), $2) }
+  | expr PLUS expr {incr expr_count; Ebinop ($1, (Op_add, Prec_addsub, Left_assoc), $3, !expr_count) }
+  | expr MINUS expr {incr expr_count; Ebinop ($1, (Op_sub, Prec_addsub, Left_assoc), $3, !expr_count) }
+  | expr MUL expr {incr expr_count; Ebinop ($1, (Op_mul, Prec_muldiv, Left_assoc), $3, !expr_count) }
+  | expr DIV expr {incr expr_count; Ebinop ($1, (Op_div, Prec_muldiv, Left_assoc), $3, !expr_count) }
+  | expr EQ expr {incr expr_count; Ebinop ($1, (Op_eq, Prec_eq, Non_assoc), $3, !expr_count) }
+  | expr NEQ expr {incr expr_count; Ebinop ($1, (Op_neq, Prec_eq, Non_assoc), $3, !expr_count) }
+  | expr LT expr {incr expr_count; Ebinop ($1, (Op_lt, Prec_eq, Non_assoc), $3, !expr_count) }
+  | expr GT expr {incr expr_count; Ebinop ($1, (Op_gt, Prec_eq, Non_assoc), $3, !expr_count) }
+  | expr LTEQ expr {incr expr_count; Ebinop ($1, (Op_lteq, Prec_eq, Non_assoc), $3, !expr_count) }
+  | expr GTEQ expr {incr expr_count; Ebinop ($1, (Op_gteq, Prec_eq, Non_assoc), $3, !expr_count) }
+  | expr OR expr {incr expr_count; Ebinop ($1, (Op_or, Prec_or, Left_assoc), $3, !expr_count) }
+  | expr AND expr {incr expr_count; Ebinop ($1, (Op_and, Prec_and, Left_assoc), $3, !expr_count) }
+  | NOT expr {incr expr_count; Eunop ((Op_not, Prec_not, Left_assoc), $2, !expr_count) }
+  | MINUS expr %prec UMINUS {incr expr_count; Eunop ((Op_minus, Prec_uminus, Non_assoc), $2, !expr_count) }
   | LPAREN expr RPAREN { $2 }

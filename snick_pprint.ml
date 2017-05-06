@@ -12,6 +12,7 @@ open Format
 (* Indentation uses 4 spaces *)
 let indent = 4;;
 
+
 (* print_program
 	* entry for the pretty printer
 	* fmt: formatter
@@ -118,10 +119,10 @@ and get_ranges ranges =
 	*)
 and print_with_assoc expr prec1 =
 	match expr with
-	| Ebinop (_, (_, prec2, _), _) ->
+	| Ebinop (_, (_, prec2, _), _, _) ->
 		if prec2 <= prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
-	| Eunop ((_, prec2, _), _) ->
+	| Eunop ((_, prec2, _), _, _) ->
 		if prec2 <= prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
 	| _ -> expr_string expr
@@ -133,10 +134,10 @@ and print_with_assoc expr prec1 =
 	*)
 and print_without_assoc expr prec1 =
 	match expr with
-	| Ebinop (_, (_, prec2, _), _) ->
+	| Ebinop (_, (_, prec2, _), _, _) ->
 		if prec2 < prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
-	| Eunop ((_, prec2, _), _) ->
+	| Eunop ((_, prec2, _), _, _) ->
 		if prec2 < prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
 	| _ -> expr_string expr
@@ -187,9 +188,9 @@ and expr_string expr =
 	| Eint value -> sprintf "%i" value
 	| Efloat value -> sprintf "%f" value
 	| EId value -> value
-	| Ebinop (expr1, op, expr2) -> print_binop_expr expr1 op expr2;
-	| Eunop (op, expr1) -> print_unop_expr op expr1;
-	| Earray (ident, exprs) ->
+	| Ebinop (expr1, op, expr2, _) -> print_binop_expr expr1 op expr2;
+	| Eunop (op, expr1, _) -> print_unop_expr op expr1;
+	| Earray (ident, exprs, _) ->
 		sprintf "%s[%s]" ident (String.concat ", " (expr_list_string exprs));
 
 (* expr_list_string
@@ -261,7 +262,7 @@ and print_stmts fmt stmts =
 and print_stmt fmt stmt =
 	match stmt with
 	| Assign (lvalue, rvalue) ->
-		fprintf fmt "%s := %s;" (lvalue_string lvalue) (rvalue_string rvalue)
+		fprintf fmt "%s := %s;" (lvalue_string lvalue) (expr_string rvalue)
 
 	| Read lvalue ->
 		fprintf fmt "read %s;" (lvalue_string lvalue)
@@ -291,11 +292,3 @@ and print_stmt fmt stmt =
 
 	| Proccall (ident, exprs) ->
 		fprintf fmt "%s(%s);" ident (String.concat ", " (expr_list_string exprs))
-
-(* rvalue_string
-	*	convert rvalue to string representation
-	* revalue: value to convert
-	*)
-and rvalue_string rvalue =
-	match rvalue with
-	| Rexpr expr -> expr_string expr;

@@ -3,9 +3,10 @@ proc main ()
 	# In function comment
 	int m; #inline *&^$*(#(bhe0978ry234f???"""comment
 	int n;
+	bool b[1..2, 1..2, 1..2, 1..2];
 	read n;
 	write "testing";
-	write b[a,c,d,g];
+	write b[1,2,3,5];
 	write n and m and n;
 	write n or (m and m);
 	write not not n;

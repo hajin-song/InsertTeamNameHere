@@ -1,0 +1,10 @@
+proc main ()
+	int x;
+	float y;
+	write 1;
+end
+
+proc p (val float x)
+	bool z;
+	write 1;
+end

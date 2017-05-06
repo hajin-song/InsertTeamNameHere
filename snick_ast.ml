@@ -68,20 +68,14 @@ type expr =
   | Eint of int
   | Efloat of float
   | EId of ident
-  | Ebinop of (expr * binop * expr)
-  | Eunop of (unop * expr)
-  | Earray of (ident * expr list)
+  | Ebinop of (expr * binop * expr * int)
+  | Eunop of (unop * expr * int)
+  | Earray of (ident * expr list * int)
 
 (* Left Hand Side of the assignment is either an identifier or array access *)
 type lvalue =
   | LId of ident
   | Larray of (ident * expr list)
-
-(* Right Hand Side of the assignment can only be expression - A single value
- * must be assigned to the identifier on the right hand side.
- *)
-type rvalue =
-  | Rexpr of expr
 
 type range = (int * int)
 
@@ -95,7 +89,7 @@ type decl =
  * (Most simple solution encountered)
  *)
 type stmt =
-  | Assign of (lvalue * rvalue)
+  | Assign of (lvalue * expr)
   | Read of lvalue
   | Write of expr
   | WriteS of string
