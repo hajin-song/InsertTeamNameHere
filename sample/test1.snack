@@ -3,11 +3,17 @@ proc main ()
 	# In function comment
 	int m; #inline *&^$*(#(bhe0978ry234f???"""comment
 	int n;
+	bool b[1..2, 1..2, 1..2, 1..2];
 	read n;
 	write "testing";
+	write b[1,2,3,5];
 	write n and m and n;
 	write n or (m and m);
 	write not not n;
+	while n > 1 do
+		m := n;
+		read x;
+	od
 	while n > 1 do
 		m := n;
 		while m > 0 do
@@ -32,7 +38,8 @@ end
 proc q (val float x, ref int k)
 	int n;
 	float y;
-	bool a[1..8];
+	bool a[1..8,0..4,2..5];
 	a[8] := true;
 	k := 42;
+	write not (true and (not((1+3)*((2+3)-x) = ((a+3)*3))));
 end

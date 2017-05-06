@@ -3,7 +3,8 @@
 *.cmi
 *.o
 *.byte
-snack
-snack_lex.ml
-snack_parse.ml
-snack_parse.mli
+snick
+snick_lex.ml
+snick_ast.mli
+snick_parse.ml
+snick_parse.mli

@@ -46,11 +46,10 @@ type token =
 
 open Parsing;;
 let _ = parse_error;;
-# 9 "snick_parse.mly"
-
+# 10 "snick_parse.mly"
 open Snick_ast
 let expr_count = ref 0
-# 54 "snick_parse.ml"
+# 53 "snick_parse.ml"
 let yytransl_const = [|
   262 (* PROC *);
   263 (* VAL *);
@@ -342,7 +341,7 @@ let yyact = [|
     Obj.repr(
 # 46 "snick_parse.mly"
                ( List.rev _1 )
-# 346 "snick_parse.ml"
+# 345 "snick_parse.ml"
                : Snick_ast.program))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 1 : 'procs) in
@@ -350,13 +349,13 @@ let yyact = [|
     Obj.repr(
 # 49 "snick_parse.mly"
                ( _2 :: _1 )
-# 354 "snick_parse.ml"
+# 353 "snick_parse.ml"
                : 'procs))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 50 "snick_parse.mly"
     ( [] )
-# 360 "snick_parse.ml"
+# 359 "snick_parse.ml"
                : 'procs))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 3 : 'header) in
@@ -365,25 +364,25 @@ let yyact = [|
     Obj.repr(
 # 52 "snick_parse.mly"
                                    ( { header = _2 ; decls = List.rev _3 ; stmts = List.rev _4 } )
-# 369 "snick_parse.ml"
+# 368 "snick_parse.ml"
                : 'proc))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 55 "snick_parse.mly"
          ( Bool )
-# 375 "snick_parse.ml"
+# 374 "snick_parse.ml"
                : 'typespec))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 56 "snick_parse.mly"
         ( Int )
-# 381 "snick_parse.ml"
+# 380 "snick_parse.ml"
                : 'typespec))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 57 "snick_parse.mly"
           ( Float )
-# 387 "snick_parse.ml"
+# 386 "snick_parse.ml"
                : 'typespec))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 3 : string) in
@@ -391,7 +390,7 @@ let yyact = [|
     Obj.repr(
 # 60 "snick_parse.mly"
                                   ( (_1, List.rev _3) )
-# 395 "snick_parse.ml"
+# 394 "snick_parse.ml"
                : 'header))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 1 : 'typespec) in
@@ -399,7 +398,7 @@ let yyact = [|
     Obj.repr(
 # 63 "snick_parse.mly"
                        ( Ref (_3, _2) )
-# 403 "snick_parse.ml"
+# 402 "snick_parse.ml"
                : 'argument))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 1 : 'typespec) in
@@ -407,7 +406,7 @@ let yyact = [|
     Obj.repr(
 # 64 "snick_parse.mly"
                        ( Val (_3, _2) )
-# 411 "snick_parse.ml"
+# 410 "snick_parse.ml"
                : 'argument))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'arguments) in
@@ -415,20 +414,20 @@ let yyact = [|
     Obj.repr(
 # 67 "snick_parse.mly"
                              ( _3 :: _1 )
-# 419 "snick_parse.ml"
+# 418 "snick_parse.ml"
                : 'arguments))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'argument) in
     Obj.repr(
 # 68 "snick_parse.mly"
              ( [_1] )
-# 426 "snick_parse.ml"
+# 425 "snick_parse.ml"
                : 'arguments))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 69 "snick_parse.mly"
     ( [] )
-# 432 "snick_parse.ml"
+# 431 "snick_parse.ml"
                : 'arguments))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'typespec) in
@@ -436,7 +435,7 @@ let yyact = [|
     Obj.repr(
 # 72 "snick_parse.mly"
                              ( Dvar (_1, _2) )
-# 440 "snick_parse.ml"
+# 439 "snick_parse.ml"
                : 'decl))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 5 : 'typespec) in
@@ -445,7 +444,7 @@ let yyact = [|
     Obj.repr(
 # 73 "snick_parse.mly"
                                                           ( Darr (_1, _2, _4) )
-# 449 "snick_parse.ml"
+# 448 "snick_parse.ml"
                : 'decl))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 1 : 'decls) in
@@ -453,13 +452,13 @@ let yyact = [|
     Obj.repr(
 # 76 "snick_parse.mly"
                ( _2 :: _1 )
-# 457 "snick_parse.ml"
+# 456 "snick_parse.ml"
                : 'decls))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 77 "snick_parse.mly"
     ( [] )
-# 463 "snick_parse.ml"
+# 462 "snick_parse.ml"
                : 'decls))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : int) in
@@ -467,7 +466,7 @@ let yyact = [|
     Obj.repr(
 # 80 "snick_parse.mly"
                               ( (_1, _3) )
-# 471 "snick_parse.ml"
+# 470 "snick_parse.ml"
                : 'range))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'range_list) in
@@ -475,14 +474,14 @@ let yyact = [|
     Obj.repr(
 # 83 "snick_parse.mly"
                            ( _3 :: _1 )
-# 479 "snick_parse.ml"
+# 478 "snick_parse.ml"
                : 'range_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'range) in
     Obj.repr(
 # 84 "snick_parse.mly"
           ( [_1] )
-# 486 "snick_parse.ml"
+# 485 "snick_parse.ml"
                : 'range_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 1 : 'stmts) in
@@ -490,20 +489,20 @@ let yyact = [|
     Obj.repr(
 # 88 "snick_parse.mly"
                ( _2 :: _1 )
-# 494 "snick_parse.ml"
+# 493 "snick_parse.ml"
                : 'stmts))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 89 "snick_parse.mly"
     ( [] )
-# 500 "snick_parse.ml"
+# 499 "snick_parse.ml"
                : 'stmts))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 1 : 'stmt_body) in
     Obj.repr(
 # 92 "snick_parse.mly"
                         ( _1 )
-# 507 "snick_parse.ml"
+# 506 "snick_parse.ml"
                : 'stmt))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 3 : 'expr) in
@@ -511,7 +510,7 @@ let yyact = [|
     Obj.repr(
 # 93 "snick_parse.mly"
                           ( Ifthen (_2, List.rev _4) )
-# 515 "snick_parse.ml"
+# 514 "snick_parse.ml"
                : 'stmt))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 5 : 'expr) in
@@ -520,7 +519,7 @@ let yyact = [|
     Obj.repr(
 # 94 "snick_parse.mly"
                                      ( Ifthenelse (_2, List.rev _4, List.rev _6) )
-# 524 "snick_parse.ml"
+# 523 "snick_parse.ml"
                : 'stmt))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 3 : 'expr) in
@@ -528,28 +527,28 @@ let yyact = [|
     Obj.repr(
 # 95 "snick_parse.mly"
                            ( While (_2, List.rev _4) )
-# 532 "snick_parse.ml"
+# 531 "snick_parse.ml"
                : 'stmt))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'lvalue) in
     Obj.repr(
 # 98 "snick_parse.mly"
                 ( Read _2 )
-# 539 "snick_parse.ml"
+# 538 "snick_parse.ml"
                : 'stmt_body))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'expr) in
     Obj.repr(
 # 99 "snick_parse.mly"
                ( Write _2 )
-# 546 "snick_parse.ml"
+# 545 "snick_parse.ml"
                : 'stmt_body))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 100 "snick_parse.mly"
                  ( WriteS _2 )
-# 553 "snick_parse.ml"
+# 552 "snick_parse.ml"
                : 'stmt_body))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lvalue) in
@@ -557,7 +556,7 @@ let yyact = [|
     Obj.repr(
 # 101 "snick_parse.mly"
                        ( Assign (_1, _3) )
-# 561 "snick_parse.ml"
+# 560 "snick_parse.ml"
                : 'stmt_body))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 3 : string) in
@@ -565,14 +564,14 @@ let yyact = [|
     Obj.repr(
 # 102 "snick_parse.mly"
                                   ( Proccall (_1, List.rev _3) )
-# 569 "snick_parse.ml"
+# 568 "snick_parse.ml"
                : 'stmt_body))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 105 "snick_parse.mly"
           ( LId _1 )
-# 576 "snick_parse.ml"
+# 575 "snick_parse.ml"
                : 'lvalue))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 3 : string) in
@@ -580,7 +579,7 @@ let yyact = [|
     Obj.repr(
 # 106 "snick_parse.mly"
                                      ( Larray (_1, List.rev _3) )
-# 584 "snick_parse.ml"
+# 583 "snick_parse.ml"
                : 'lvalue))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr_list) in
@@ -588,20 +587,20 @@ let yyact = [|
     Obj.repr(
 # 109 "snick_parse.mly"
                          ( _3 :: _1 )
-# 592 "snick_parse.ml"
+# 591 "snick_parse.ml"
                : 'expr_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'expr) in
     Obj.repr(
 # 110 "snick_parse.mly"
          ( [_1] )
-# 599 "snick_parse.ml"
+# 598 "snick_parse.ml"
                : 'expr_list))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 111 "snick_parse.mly"
     ( [] )
-# 605 "snick_parse.ml"
+# 604 "snick_parse.ml"
                : 'expr_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'arr_list) in
@@ -609,42 +608,42 @@ let yyact = [|
     Obj.repr(
 # 114 "snick_parse.mly"
                         ( _3 :: _1 )
-# 613 "snick_parse.ml"
+# 612 "snick_parse.ml"
                : 'arr_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'expr) in
     Obj.repr(
 # 115 "snick_parse.mly"
          ( [_1] )
-# 620 "snick_parse.ml"
+# 619 "snick_parse.ml"
                : 'arr_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : bool) in
     Obj.repr(
 # 119 "snick_parse.mly"
                ( Ebool _1 )
-# 627 "snick_parse.ml"
+# 626 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : int) in
     Obj.repr(
 # 120 "snick_parse.mly"
               ( Eint _1 )
-# 634 "snick_parse.ml"
+# 633 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : float) in
     Obj.repr(
 # 121 "snick_parse.mly"
                 ( Efloat _1 )
-# 641 "snick_parse.ml"
+# 640 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 122 "snick_parse.mly"
           ( EId _1 )
-# 648 "snick_parse.ml"
+# 647 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 3 : string) in
@@ -652,7 +651,7 @@ let yyact = [|
     Obj.repr(
 # 123 "snick_parse.mly"
                                      ( incr expr_count; Earray (_1, List.rev _3, !expr_count) )
-# 656 "snick_parse.ml"
+# 655 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -660,7 +659,7 @@ let yyact = [|
     Obj.repr(
 # 125 "snick_parse.mly"
                    (incr expr_count; Ebinop (_1, (Op_add, Prec_addsub, Left_assoc), _3, !expr_count) )
-# 664 "snick_parse.ml"
+# 663 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -668,7 +667,7 @@ let yyact = [|
     Obj.repr(
 # 126 "snick_parse.mly"
                     (incr expr_count; Ebinop (_1, (Op_sub, Prec_addsub, Left_assoc), _3, !expr_count) )
-# 672 "snick_parse.ml"
+# 671 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -676,7 +675,7 @@ let yyact = [|
     Obj.repr(
 # 127 "snick_parse.mly"
                   (incr expr_count; Ebinop (_1, (Op_mul, Prec_muldiv, Left_assoc), _3, !expr_count) )
-# 680 "snick_parse.ml"
+# 679 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -684,7 +683,7 @@ let yyact = [|
     Obj.repr(
 # 128 "snick_parse.mly"
                   (incr expr_count; Ebinop (_1, (Op_div, Prec_muldiv, Left_assoc), _3, !expr_count) )
-# 688 "snick_parse.ml"
+# 687 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -692,7 +691,7 @@ let yyact = [|
     Obj.repr(
 # 129 "snick_parse.mly"
                  (incr expr_count; Ebinop (_1, (Op_eq, Prec_eq, Non_assoc), _3, !expr_count) )
-# 696 "snick_parse.ml"
+# 695 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -700,7 +699,7 @@ let yyact = [|
     Obj.repr(
 # 130 "snick_parse.mly"
                   (incr expr_count; Ebinop (_1, (Op_neq, Prec_eq, Non_assoc), _3, !expr_count) )
-# 704 "snick_parse.ml"
+# 703 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -708,7 +707,7 @@ let yyact = [|
     Obj.repr(
 # 131 "snick_parse.mly"
                  (incr expr_count; Ebinop (_1, (Op_lt, Prec_eq, Non_assoc), _3, !expr_count) )
-# 712 "snick_parse.ml"
+# 711 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -716,7 +715,7 @@ let yyact = [|
     Obj.repr(
 # 132 "snick_parse.mly"
                  (incr expr_count; Ebinop (_1, (Op_gt, Prec_eq, Non_assoc), _3, !expr_count) )
-# 720 "snick_parse.ml"
+# 719 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -724,7 +723,7 @@ let yyact = [|
     Obj.repr(
 # 133 "snick_parse.mly"
                    (incr expr_count; Ebinop (_1, (Op_lteq, Prec_eq, Non_assoc), _3, !expr_count) )
-# 728 "snick_parse.ml"
+# 727 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -732,7 +731,7 @@ let yyact = [|
     Obj.repr(
 # 134 "snick_parse.mly"
                    (incr expr_count; Ebinop (_1, (Op_gteq, Prec_eq, Non_assoc), _3, !expr_count) )
-# 736 "snick_parse.ml"
+# 735 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -740,7 +739,7 @@ let yyact = [|
     Obj.repr(
 # 135 "snick_parse.mly"
                  (incr expr_count; Ebinop (_1, (Op_or, Prec_or, Left_assoc), _3, !expr_count) )
-# 744 "snick_parse.ml"
+# 743 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'expr) in
@@ -748,28 +747,28 @@ let yyact = [|
     Obj.repr(
 # 136 "snick_parse.mly"
                   (incr expr_count; Ebinop (_1, (Op_and, Prec_and, Left_assoc), _3, !expr_count) )
-# 752 "snick_parse.ml"
+# 751 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'expr) in
     Obj.repr(
 # 137 "snick_parse.mly"
              (incr expr_count; Eunop ((Op_not, Prec_not, Left_assoc), _2, !expr_count) )
-# 759 "snick_parse.ml"
+# 758 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'expr) in
     Obj.repr(
 # 138 "snick_parse.mly"
                             (incr expr_count; Eunop ((Op_minus, Prec_uminus, Non_assoc), _2, !expr_count) )
-# 766 "snick_parse.ml"
+# 765 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 1 : 'expr) in
     Obj.repr(
 # 139 "snick_parse.mly"
                        ( _2 )
-# 773 "snick_parse.ml"
+# 772 "snick_parse.ml"
                : 'expr))
 (* Entry program *)
 ; (fun __caml_parser_env -> raise (Parsing.YYexit (Parsing.peek_val __caml_parser_env 0)))
