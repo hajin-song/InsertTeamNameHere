@@ -621,28 +621,28 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : bool) in
     Obj.repr(
 # 119 "snick_parse.mly"
-               ( Ebool _1 )
+               ( incr expr_count; Ebool (_1, !expr_count) )
 # 626 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : int) in
     Obj.repr(
 # 120 "snick_parse.mly"
-              ( Eint _1 )
+              ( incr expr_count; Eint (_1, !expr_count) )
 # 633 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : float) in
     Obj.repr(
 # 121 "snick_parse.mly"
-                ( Efloat _1 )
+                ( incr expr_count; Efloat (_1, !expr_count) )
 # 640 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 122 "snick_parse.mly"
-          ( EId _1 )
+          ( incr expr_count; EId (_1, !expr_count) )
 # 647 "snick_parse.ml"
                : 'expr))
 ; (fun __caml_parser_env ->

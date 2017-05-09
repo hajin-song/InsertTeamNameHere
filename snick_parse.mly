@@ -116,10 +116,10 @@ arr_list:
 
 /* Operator altered to include their precendents and associations*/
 expr:
-  | BOOL_CONST { Ebool $1 }
-  | INT_CONST { Eint $1 }
-  | FLOAT_CONST { Efloat $1 }
-  | IDENT { EId $1 }
+  | BOOL_CONST { incr expr_count; Ebool ($1, !expr_count) }
+  | INT_CONST { incr expr_count; Eint ($1, !expr_count) }
+  | FLOAT_CONST { incr expr_count; Efloat ($1, !expr_count) }
+  | IDENT { incr expr_count; EId ($1, !expr_count) }
   | IDENT LBRACKET arr_list RBRACKET { incr expr_count; Earray ($1, List.rev $3, !expr_count) }
   /* Binary operators */
   | expr PLUS expr {incr expr_count; Ebinop ($1, (Op_add, Prec_addsub, Left_assoc), $3, !expr_count) }

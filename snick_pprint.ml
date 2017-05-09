@@ -184,10 +184,10 @@ and print_unop_expr (op, prec, assoc) expr =
 	*)
 and expr_string expr =
 	match expr with
-	| Ebool value -> sprintf "%B" value
-	| Eint value -> sprintf "%i" value
-	| Efloat value -> sprintf "%f" value
-	| EId value -> value
+	| Ebool (value, _) -> sprintf "%B" value
+	| Eint (value, _) -> sprintf "%i" value
+	| Efloat (value, _) -> sprintf "%f" value
+	| EId (value, _) -> value
 	| Ebinop (expr1, op, expr2, _) -> print_binop_expr expr1 op expr2;
 	| Eunop (op, expr1, _) -> print_unop_expr op expr1;
 	| Earray (ident, exprs, _) ->

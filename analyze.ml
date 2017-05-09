@@ -7,10 +7,8 @@ let stack_ptr = ref 0;;
 
 let build_arg arg =
 	incr stack_ptr;
-	fprintf Format.std_formatter "%s\n" !curr_env;
 	match arg with
 	| Val (ident, t) ->
-		fprintf Format.std_formatter "val = %s\n" ident;
 		let symbol = {
 			pass_by = Value;
 			ident = ident;
@@ -20,7 +18,6 @@ let build_arg arg =
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;
 	| Ref (ident, t) ->
-		fprintf Format.std_formatter "ref = %s\n" ident;
 		let symbol = {
 			pass_by = Reference;
 			ident = ident;
@@ -143,12 +140,20 @@ let check_unop unop t =
 
 let rec expr_type expr =
 	match expr with
-	| Ebool _ -> Bool
-	| Eint _ -> Int
-	| Efloat _ -> Float
-	| EId ident -> (
+	| Ebool (_, id) ->
+		insert_type id Bool;
+		Bool;
+	| Eint (_, id) ->
+		insert_type id Int;
+		Int
+	| Efloat (_, id) ->
+		insert_type id Float;
+		Float
+	| EId (ident, id) -> (
 		match lookup_symbol !curr_env ident with
-		| Var {t = t} -> print_string "Var loaded\n"; t;
+		| Var {t = t} ->
+			insert_type id t;
+			t;
 		| _ -> print_string "Array identifier used without index\n"; exit 0;
 		)
 	| Ebinop (lexpr, (binop, _, _), rexpr, id) ->
@@ -235,9 +240,9 @@ let rec do_stmts stmts =
 and do_stmt stmt =
 	match stmt with
 	| Assign (lvalue, rvalue) -> do_assign lvalue rvalue;
-	| Read lvalue -> print_string "Read\n";
+	| Read lvalue -> ();
 	| Write expr -> let _ = expr_type expr in ();
-	| WriteS str -> print_string "WriteS\n";
+	| WriteS str -> ();
 	| Ifthen (expr, stmts) -> 
 		if (expr_type expr != Bool) then (print_string "Guard is not a Bool\n"; exit 0);
 		do_stmts stmts;
@@ -253,18 +258,12 @@ and do_stmt stmt =
 let rec scan_prog prog =
 	match prog with
 	| {header = (proc, _); decls = decls; stmts = stmts} :: tail ->
-		print_string "Current proc = "; print_string proc; print_string "\n";
 		curr_env := proc;
 		do_decls decls;
-		print_string "Decls scanned\n";
 		do_stmts stmts;
-		print_string "Stmts scanned\n";
 		scan_prog tail;
 	| [] -> ();;
 
 let semantic_analysis prog =
-	print_string "Starting Analysis\n";
 	scan_procs prog;
-	print_string "Procs scanned\n";
 	scan_prog prog;
-	print_string "Prog scanned\n";;

@@ -64,10 +64,10 @@ type header = (ident * argument list)
 
 (* An expression is a primative type or operation on primative types *)
 type expr =
-  | Ebool of bool
-  | Eint of int
-  | Efloat of float
-  | EId of ident
+  | Ebool of (bool * int)
+  | Eint of (int * int)
+  | Efloat of (float * int)
+  | EId of (ident * int)
   | Ebinop of (expr * binop * expr * int)
   | Eunop of (unop * expr * int)
   | Earray of (ident * expr list * int)

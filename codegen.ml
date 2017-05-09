@@ -3,6 +3,7 @@ open Symbol;;
 open Format;;
 
 let indent = 4;;
+let reg = ref 1;;
 
 let scope : string Stack.t = Stack.create ();;
 
@@ -12,14 +13,41 @@ let return () = Stack.pop scope;;
 
 let this_scope () = Stack.top scope;;
 
-let generate_expr fmt expr = ()
+let generate_expr fmt expr =
+	match expr with
+	| Ebool (value, id) ->
+		if value = true then
+			fprintf fmt "int_const r%i, 1@," !reg
+		else
+			fprintf fmt "int_const r%i, 0@," !reg;
+		incr reg;
+		id;
+	| Eint (value, id) ->
+		fprintf fmt "int_const r%i, %i@," !reg value;
+		incr reg;
+		id;
+	| Efloat (value, id) ->
+		fprintf fmt "int_const r%i, %f@," !reg value;
+		incr reg;
+		id;
+	| EId (ident, id) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Var {stack = stack} -> fprintf fmt "load r%i, %i@," !reg stack; id;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+	| Ebinop (lexpr, (binop, _, _), rexpr, id) ->
+		id;
+	| Eunop ((unop, _, _), expr, id) ->
+		id;
+	| Earray (ident, exprs, id) ->
+		id;;
 
 let print_write fmt expr =
-	generate_expr fmt expr;;
-	(* match (get_attrs expr).t with
-	| Int -> fprintf "call_builtin print_int@,";
-	| Float -> fprintf "call_builtin print_real@,";
-	| Bool -> fprintf "call_builtin print_bool@,";; *)
+	let id = generate_expr fmt expr in
+	decr reg;
+	match lookup_type id with
+	| Int -> fprintf fmt "call_builtin print_int@,";
+	| Float -> fprintf fmt "call_builtin print_real@,";
+	| Bool -> fprintf fmt "call_builtin print_bool@,";;
 
 let rec generate_stmts fmt stmts =
 	match stmts with
@@ -30,7 +58,12 @@ let rec generate_stmts fmt stmts =
 
 and generate_stmt fmt stmt =
 	match stmt with
-	| Write expr -> print_write fmt expr;
+	| Write expr ->
+		fprintf fmt "# write";
+		open_vbox indent;
+		print_cut();
+		print_write fmt expr;
+		close_box();
 	| _ -> ();;
 
 let print_var fmt stack t =
@@ -108,8 +141,7 @@ let generate prog =
 	let fmt = Format.std_formatter in
 	open_vbox 0;
 	open_vbox indent;
-	print_cut();
-	fprintf fmt "call proc_main@,";
+	fprintf fmt "    call proc_main@,";
 	fprintf fmt "halt";
 	close_box();
 	print_cut();
