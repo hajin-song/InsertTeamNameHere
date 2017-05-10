@@ -2,8 +2,8 @@ proc main ()
 	int x;
 	float y;
 	bool z;
-	write x;
-	write true;
-	write 1.0;
-	write 1+2+3.0;
+	write -1.0;
+	write -1;
+	write -x;
+	write -(1 * 2.0);
 end
