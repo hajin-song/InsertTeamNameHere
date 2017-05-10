@@ -3,7 +3,7 @@ open Symbol;;
 open Format;;
 
 let indent = 4;;
-let reg = ref 1;;
+let reg = ref (-1);;
 
 let scope : string Stack.t = Stack.create ();;
 
@@ -13,41 +13,70 @@ let return () = Stack.pop scope;;
 
 let this_scope () = Stack.top scope;;
 
-let generate_expr fmt expr =
-	match expr with
-	| Ebool (value, id) ->
-		if value = true then
-			fprintf fmt "int_const r%i, 1@," !reg
-		else
-			fprintf fmt "int_const r%i, 0@," !reg;
-		incr reg;
-		id;
-	| Eint (value, id) ->
-		fprintf fmt "int_const r%i, %i@," !reg value;
-		incr reg;
-		id;
-	| Efloat (value, id) ->
-		fprintf fmt "int_const r%i, %f@," !reg value;
-		incr reg;
-		id;
-	| EId (ident, id) ->
-		(match lookup_symbol (this_scope()) ident with
-		| Var {stack = stack} -> fprintf fmt "load r%i, %i@," !reg stack; id;
-		| _ -> print_string "Not implemented\n"; exit 0;)
-	| Ebinop (lexpr, (binop, _, _), rexpr, id) ->
-		id;
-	| Eunop ((unop, _, _), expr, id) ->
-		id;
-	| Earray (ident, exprs, id) ->
-		id;;
+let print_binop fmt (op, lt, rt) =
+	let rreg = !reg in
+	decr reg;
+	let lreg = !reg in
+	match op with
+	| Op_add -> (
+		match lt, rt with
+		| Int, Int -> fprintf fmt "@,add_int r%i, r%i, r%i" lreg lreg rreg;
+		| Int, Float ->
+			fprintf fmt "@,int_to_real r%i, r%i@,add_real r%i, r%i, r%i"
+			lreg lreg lreg lreg rreg
+		| Float, Int ->
+			fprintf fmt "@,int_to_real r%i, r%i@,add_real r%i, r%i, r%i"
+			rreg rreg lreg lreg rreg
+		| Float, Float -> fprintf fmt "@,add_real r%i, r%i, r%i" lreg lreg rreg;
+		| _, _ -> ())
+	| Op_sub -> ()
+	| Op_mul -> ()
+	| Op_div -> ()
+	| Op_eq -> ()
+	| Op_neq -> ()
+	| Op_lt -> ()
+	| Op_gt -> ()
+	| Op_gteq -> ()
+	| Op_lteq -> ()
+	| Op_or -> ()
+	| Op_and -> ()
 
-let print_write fmt expr =
-	let id = generate_expr fmt expr in
+let rec generate_expr fmt expr =
+	match expr with
+	| { expr = Ebool (value); id = id } ->
+		incr reg;
+		if value = true then
+			fprintf fmt "@,int_const r%i, 1" !reg
+		else
+			fprintf fmt "@,int_const r%i, 0" !reg;
+	| { expr = Eint (value); id = id } ->
+		incr reg;
+		fprintf fmt "@,int_const r%i, %i" !reg value;
+	| { expr = Efloat (value); id = id } ->
+		incr reg;
+		fprintf fmt "@,real_const r%i, %f" !reg value;
+	| { expr = EId (ident); id = id } ->
+		(match lookup_symbol (this_scope()) ident with
+		| Var {stack = stack} ->
+			incr reg;
+			fprintf fmt "@,load r%i, %i" !reg stack;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+	| { expr = Ebinop (({id = lid} as lexpr), (op, _, _), ({id = rid} as rexpr))} ->
+		generate_expr fmt lexpr;
+		generate_expr fmt rexpr;
+		let lt = lookup_type lid in
+		let rt = lookup_type rid in
+		print_binop fmt (op, lt, rt);
+	| { expr = Eunop ((unop, _, _), expr); id = id } -> ();
+	| { expr = Earray (ident, exprs); id = id } -> ();;
+
+let print_write fmt ({ expr = e; id = id } as expr) =
+	generate_expr fmt expr;
 	decr reg;
 	match lookup_type id with
-	| Int -> fprintf fmt "call_builtin print_int@,";
-	| Float -> fprintf fmt "call_builtin print_real@,";
-	| Bool -> fprintf fmt "call_builtin print_bool@,";;
+	| Int -> fprintf fmt "@,call_builtin print_int";
+	| Float -> fprintf fmt "@,call_builtin print_real";
+	| Bool -> fprintf fmt "@,call_builtin print_bool";;
 
 let rec generate_stmts fmt stmts =
 	match stmts with
@@ -59,24 +88,18 @@ let rec generate_stmts fmt stmts =
 and generate_stmt fmt stmt =
 	match stmt with
 	| Write expr ->
-		fprintf fmt "# write";
-		open_vbox indent;
-		print_cut();
-		print_write fmt expr;
-		close_box();
+		fprintf fmt "@,@[<v 4># write%a@]"
+		print_write expr;
 	| _ -> ();;
 
 let print_var fmt stack t =
 	match t with
 	| Int ->
-		fprintf fmt "int_const r0, 0@,";
-		fprintf fmt "store %i, r0@," stack;
+		fprintf fmt "int_const r0, 0@,store %i, r0" stack;
 	| Float ->
-		fprintf fmt "real_const r0, 0@,";
-		fprintf fmt "store %i, r0@," stack;
+		fprintf fmt "real_const r0, 0@,store %i, r0" stack;
 	| Bool ->
-		fprintf fmt "bool_const r0, 0@,";
-		fprintf fmt "store %i, r0@," stack;;
+		fprintf fmt "bool_const r0, 0@,store %i, r0" stack;;
 
 let generate_var fmt (t, ident) =
 	match lookup_symbol (this_scope()) ident with
@@ -93,19 +116,20 @@ let generate_decl fmt decl =
 let rec generate_decls fmt decls =
 	match decls with
 	| (decl::tail) ->
-		generate_decl fmt decl;
-		generate_decls fmt tail;
-	| [] -> ();
- 	close_box();;
+		fprintf fmt "@,%a%a"
+		generate_decl decl
+		generate_decls tail;
+	| [] -> ();;
 
-let rec generate_args fmt n args =
+let rec generate_args fmt (n, args) =
 	match args with
 	| (arg::tail) ->
-		generate_arg fmt n arg;
-		generate_args fmt n tail;
+		fprintf fmt "@,%a%a"
+		generate_arg (n, arg)
+		generate_args (n, tail);
 	| [] -> ();
 
-and generate_arg fmt n arg = 
+and generate_arg fmt (n, arg) = 
 	match arg with
 	| Val (_, t) -> print_arg fmt t n;
 	| Ref (_, t) -> ();
@@ -113,37 +137,28 @@ and generate_arg fmt n arg =
 and print_arg fmt t n =
 	match t with
 	| Int ->
-		fprintf fmt "store %i, r%i@," n n;
+		fprintf fmt "store %i, r%i" n n;
 	| Float ->
-		fprintf fmt "store %i, r%i@," n n;
+		fprintf fmt "store %i, r%i" n n;
 	| Bool ->
-		fprintf fmt "store %i, r%i@," n n;;
+		fprintf fmt "store %i, r%i" n n;;
 
 let generate_header fmt (ident, args) =
 	call ident;
-	fprintf fmt "proc_%s:@," ident;
-	open_vbox indent;
-	fprintf fmt "# prologue@,";
 	let {frame = frame} = lookup_proc ident in
-	fprintf fmt "push_stack_frame %i@," !frame;
-	generate_args fmt 1 args;;
+	fprintf fmt "proc_%s:@,@[<v 4># prologue@,push_stack_frame %i%a"
+	ident !frame generate_args (1, args);;
 
 let rec generate_procs fmt prog =
 	match prog with
 	| {header = header; decls = decls; stmts = stmts} :: tail ->
-		generate_header fmt header;
-		generate_decls fmt decls;
-		generate_stmts fmt stmts;
-		generate_procs fmt tail
+		fprintf fmt "%a%a@]%a%a"
+		generate_header header
+		generate_decls decls
+		generate_stmts stmts
+		generate_procs tail
 	| [] -> ();;
 
 let generate prog =
 	let fmt = Format.std_formatter in
-	open_vbox 0;
-	open_vbox indent;
-	fprintf fmt "    call proc_main@,";
-	fprintf fmt "halt";
-	close_box();
-	print_cut();
-	generate_procs fmt prog;
-	close_box();;
+	fprintf fmt "@[<v>@[<v 4>    call proc_main@,halt@]@,%a@,@]" generate_procs prog;;

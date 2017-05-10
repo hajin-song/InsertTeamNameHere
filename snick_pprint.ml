@@ -119,10 +119,10 @@ and get_ranges ranges =
 	*)
 and print_with_assoc expr prec1 =
 	match expr with
-	| Ebinop (_, (_, prec2, _), _, _) ->
+	| { expr = Ebinop (_, (_, prec2, _), _) } ->
 		if prec2 <= prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
-	| Eunop ((_, prec2, _), _, _) ->
+	| { expr = Eunop ((_, prec2, _), _) } ->
 		if prec2 <= prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
 	| _ -> expr_string expr
@@ -134,10 +134,10 @@ and print_with_assoc expr prec1 =
 	*)
 and print_without_assoc expr prec1 =
 	match expr with
-	| Ebinop (_, (_, prec2, _), _, _) ->
+	| { expr = Ebinop (_, (_, prec2, _), _) } ->
 		if prec2 < prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
-	| Eunop ((_, prec2, _), _, _) ->
+	| { expr = Eunop ((_, prec2, _), _) } ->
 		if prec2 < prec1 then sprintf "(%s)" (expr_string expr)
 		else expr_string expr
 	| _ -> expr_string expr
@@ -184,13 +184,13 @@ and print_unop_expr (op, prec, assoc) expr =
 	*)
 and expr_string expr =
 	match expr with
-	| Ebool (value, _) -> sprintf "%B" value
-	| Eint (value, _) -> sprintf "%i" value
-	| Efloat (value, _) -> sprintf "%f" value
-	| EId (value, _) -> value
-	| Ebinop (expr1, op, expr2, _) -> print_binop_expr expr1 op expr2;
-	| Eunop (op, expr1, _) -> print_unop_expr op expr1;
-	| Earray (ident, exprs, _) ->
+	| { expr = Ebool (value) } -> sprintf "%B" value
+	| { expr = Eint (value) } -> sprintf "%i" value
+	| { expr = Efloat (value) } -> sprintf "%f" value
+	| { expr = EId (value) } -> value
+	| { expr = Ebinop (expr1, op, expr2) } -> print_binop_expr expr1 op expr2;
+	| { expr = Eunop (op, expr1) } -> print_unop_expr op expr1;
+	| { expr = Earray (ident, exprs) } ->
 		sprintf "%s[%s]" ident (String.concat ", " (expr_list_string exprs));
 
 (* expr_list_string

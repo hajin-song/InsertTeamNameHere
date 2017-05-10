@@ -1,11 +1,9 @@
 proc main ()
 	int x;
 	float y;
+	bool z;
 	write x;
 	write true;
-end
-
-proc p (val float x)
-	bool z;
-	write 1;
+	write 1.0;
+	write 1+2+3.0;
 end

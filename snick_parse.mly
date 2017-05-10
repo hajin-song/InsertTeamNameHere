@@ -116,24 +116,24 @@ arr_list:
 
 /* Operator altered to include their precendents and associations*/
 expr:
-  | BOOL_CONST { incr expr_count; Ebool ($1, !expr_count) }
-  | INT_CONST { incr expr_count; Eint ($1, !expr_count) }
-  | FLOAT_CONST { incr expr_count; Efloat ($1, !expr_count) }
-  | IDENT { incr expr_count; EId ($1, !expr_count) }
-  | IDENT LBRACKET arr_list RBRACKET { incr expr_count; Earray ($1, List.rev $3, !expr_count) }
+  | BOOL_CONST { incr expr_count; { expr = Ebool $1; id = !expr_count } }
+  | INT_CONST { incr expr_count; { expr = Eint $1; id = !expr_count } }
+  | FLOAT_CONST { incr expr_count; { expr = Efloat $1; id = !expr_count } }
+  | IDENT { incr expr_count; { expr = EId $1; id = !expr_count} }
+  | IDENT LBRACKET arr_list RBRACKET { incr expr_count; { expr = Earray ($1, List.rev $3); id = !expr_count } }
   /* Binary operators */
-  | expr PLUS expr {incr expr_count; Ebinop ($1, (Op_add, Prec_addsub, Left_assoc), $3, !expr_count) }
-  | expr MINUS expr {incr expr_count; Ebinop ($1, (Op_sub, Prec_addsub, Left_assoc), $3, !expr_count) }
-  | expr MUL expr {incr expr_count; Ebinop ($1, (Op_mul, Prec_muldiv, Left_assoc), $3, !expr_count) }
-  | expr DIV expr {incr expr_count; Ebinop ($1, (Op_div, Prec_muldiv, Left_assoc), $3, !expr_count) }
-  | expr EQ expr {incr expr_count; Ebinop ($1, (Op_eq, Prec_eq, Non_assoc), $3, !expr_count) }
-  | expr NEQ expr {incr expr_count; Ebinop ($1, (Op_neq, Prec_eq, Non_assoc), $3, !expr_count) }
-  | expr LT expr {incr expr_count; Ebinop ($1, (Op_lt, Prec_eq, Non_assoc), $3, !expr_count) }
-  | expr GT expr {incr expr_count; Ebinop ($1, (Op_gt, Prec_eq, Non_assoc), $3, !expr_count) }
-  | expr LTEQ expr {incr expr_count; Ebinop ($1, (Op_lteq, Prec_eq, Non_assoc), $3, !expr_count) }
-  | expr GTEQ expr {incr expr_count; Ebinop ($1, (Op_gteq, Prec_eq, Non_assoc), $3, !expr_count) }
-  | expr OR expr {incr expr_count; Ebinop ($1, (Op_or, Prec_or, Left_assoc), $3, !expr_count) }
-  | expr AND expr {incr expr_count; Ebinop ($1, (Op_and, Prec_and, Left_assoc), $3, !expr_count) }
-  | NOT expr {incr expr_count; Eunop ((Op_not, Prec_not, Left_assoc), $2, !expr_count) }
-  | MINUS expr %prec UMINUS {incr expr_count; Eunop ((Op_minus, Prec_uminus, Non_assoc), $2, !expr_count) }
+  | expr PLUS expr {incr expr_count; { expr = Ebinop ($1, (Op_add, Prec_addsub, Left_assoc), $3); id = !expr_count } }
+  | expr MINUS expr {incr expr_count; { expr = Ebinop ($1, (Op_sub, Prec_addsub, Left_assoc), $3); id = !expr_count } }
+  | expr MUL expr {incr expr_count; { expr = Ebinop ($1, (Op_mul, Prec_muldiv, Left_assoc), $3); id = !expr_count } }
+  | expr DIV expr {incr expr_count; { expr = Ebinop ($1, (Op_div, Prec_muldiv, Left_assoc), $3); id = !expr_count } }
+  | expr EQ expr {incr expr_count; { expr = Ebinop ($1, (Op_eq, Prec_eq, Non_assoc), $3); id = !expr_count } }
+  | expr NEQ expr {incr expr_count; { expr = Ebinop ($1, (Op_neq, Prec_eq, Non_assoc), $3); id = !expr_count } }
+  | expr LT expr {incr expr_count; { expr = Ebinop ($1, (Op_lt, Prec_eq, Non_assoc), $3); id = !expr_count } }
+  | expr GT expr {incr expr_count; { expr = Ebinop ($1, (Op_gt, Prec_eq, Non_assoc), $3); id = !expr_count } }
+  | expr LTEQ expr {incr expr_count; { expr = Ebinop ($1, (Op_lteq, Prec_eq, Non_assoc), $3); id = !expr_count } }
+  | expr GTEQ expr {incr expr_count; { expr = Ebinop ($1, (Op_gteq, Prec_eq, Non_assoc), $3); id = !expr_count } }
+  | expr OR expr {incr expr_count; { expr = Ebinop ($1, (Op_or, Prec_or, Left_assoc), $3); id = !expr_count } }
+  | expr AND expr {incr expr_count; { expr = Ebinop ($1, (Op_and, Prec_and, Left_assoc), $3); id = !expr_count } }
+  | NOT expr {incr expr_count; { expr = Eunop ((Op_not, Prec_not, Left_assoc), $2); id = !expr_count } }
+  | MINUS expr %prec UMINUS {incr expr_count; { expr = Eunop ((Op_minus, Prec_uminus, Non_assoc), $2); id = !expr_count } }
   | LPAREN expr RPAREN { $2 }

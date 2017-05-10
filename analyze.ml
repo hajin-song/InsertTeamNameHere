@@ -140,34 +140,34 @@ let check_unop unop t =
 
 let rec expr_type expr =
 	match expr with
-	| Ebool (_, id) ->
+	| { expr = Ebool (_); id = id } ->
 		insert_type id Bool;
 		Bool;
-	| Eint (_, id) ->
+	| { expr = Eint (_); id = id } ->
 		insert_type id Int;
 		Int
-	| Efloat (_, id) ->
+	| { expr = Efloat (_); id = id } ->
 		insert_type id Float;
 		Float
-	| EId (ident, id) -> (
+	| { expr = EId (ident); id = id } -> (
 		match lookup_symbol !curr_env ident with
 		| Var {t = t} ->
 			insert_type id t;
 			t;
 		| _ -> print_string "Array identifier used without index\n"; exit 0;
 		)
-	| Ebinop (lexpr, (binop, _, _), rexpr, id) ->
+	| { expr = Ebinop (lexpr, (binop, _, _), rexpr); id = id } ->
 		let ltype = expr_type lexpr in
 		let rtype = expr_type rexpr in
 		let newtype = check_binop binop ltype rtype in
 		insert_type id newtype;
 		newtype;
-	| Eunop ((unop, _, _), expr, id) ->
+	| { expr = Eunop ((unop, _, _), expr); id = id } ->
 		let t = expr_type expr in
 		let newtype = check_unop unop t in
 		insert_type id newtype;
 		newtype;
-	| Earray (ident, exprs, id) -> (
+	| { expr = Earray (ident, exprs); id = id } -> (
 		match lookup_symbol !curr_env ident with
 		| Arr {t = t; ranges = ranges} ->
 			check_indicies ranges exprs;
