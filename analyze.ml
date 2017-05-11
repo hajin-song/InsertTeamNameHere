@@ -1,3 +1,11 @@
+(*
+ * analyze.ml
+ * Code Anaylser for Snack
+ * Created By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu L
+ * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
+ * Last Modified: 11-MAY-2017
+ *)
+
 open Snick_ast
 open Symbol
 open Format
@@ -5,72 +13,9 @@ let curr_env = ref "main";;
 
 let stack_ptr = ref 0;;
 
-let build_arg arg =
-	incr stack_ptr;
-	match arg with
-	| Val (ident, t) ->
-		let symbol = {
-			pass_by = Value;
-			ident = ident;
-			t = t;
-			stack = !stack_ptr
-		} in
-		insert_symbol !curr_env ident (Var symbol);
-		symbol;
-	| Ref (ident, t) ->
-		let symbol = {
-			pass_by = Reference;
-			ident = ident;
-			t = t;
-			stack = !stack_ptr
-		} in
-		insert_symbol !curr_env ident (Var symbol);
-		symbol;;
-
-let rec build_args args =
-	match args with
-	| arg :: tail -> (build_arg arg) :: build_args tail;
-	| [] -> [];;
-
-let record_proc (ident, args) =
-	curr_env := ident;
-	stack_ptr := 0;
-	let proc_args = build_args args in
-	insert_proc {ident = ident; args = proc_args; frame = ref !stack_ptr};;
-
-let rec scan_procs prog =
-	match prog with
-	| {header = header} :: tail ->
-		record_proc header;
-		scan_procs tail;
-	| [] -> ();;
-
-let do_decl decl =
-	let stack = new_ptr !curr_env in
-	match decl with
-	| Dvar (t, ident) -> let symbol = Var {
-			pass_by = Value;
-			ident = ident;
-			t = t;
-			stack = stack
-		} in
-		insert_symbol !curr_env ident symbol;
-	| Darr (t, ident, ranges) -> let symbol = Arr {
-			ident = ident;
-			t = t;
-			ranges = ranges;
-			stack = stack
-		} in
-		insert_symbol !curr_env ident symbol;;
-	
-
-let rec do_decls decls =
-	match decls with
-	| decl :: tail ->
-		do_decl decl;
-		do_decls tail;
-	| [] -> ();;
-
+(* check_binop
+	* Validates Binary Operator
+*)
 let check_binop binop ltype rtype =
 	match binop, ltype, rtype with
 	(* Add *)
@@ -128,6 +73,9 @@ let check_binop binop ltype rtype =
 	(* Anything else is invalid *)
 	| _ -> print_string "Invalid binary operator types\n"; exit 0;;
 
+(*	check_unop
+	* Validates Unary Operator
+*)
 let check_unop unop t =
 	match unop, t with
 	(* Negation *)
@@ -138,83 +86,134 @@ let check_unop unop t =
 	(* Anything else is invalid *)
 	| _ -> print_string "Invalid unary operator type\n"; exit 0;;
 
+(* build_args
+	* Builds arguments for proc by determining whether it is
+	* PbV or PbR, then allocate to appropriate stack space
+	*)
+let rec build_args args =
+	match args with
+	| arg :: tail -> (build_arg arg) :: build_args tail;
+	| [] -> [];
+and build_arg arg =
+	incr stack_ptr;
+	match arg with
+	| Val (ident, t) ->
+		let symbol = {
+			pass_by = Value;
+			ident = ident;
+			t = t;
+			stack = !stack_ptr
+		} in
+		insert_symbol !curr_env ident (Var symbol);
+		symbol;
+	| Ref (ident, t) ->
+		let symbol = {
+			pass_by = Reference;
+			ident = ident;
+			t = t;
+			stack = !stack_ptr
+		} in
+		insert_symbol !curr_env ident (Var symbol);
+		symbol;;
+
+(* scan_procs
+	*	Scan and build scope space for procs by reading its identifier and arguments
+*)
+let rec scan_procs prog =
+	match prog with
+	| {header = header} :: tail -> record_proc header; scan_procs tail;
+	| [] -> ();
+and record_proc (ident, args) =
+	curr_env := ident;
+	stack_ptr := 0;
+	let proc_args = build_args args in
+	insert_proc {ident = ident; args = proc_args; frame = ref !stack_ptr};;
+
+(* do_decls
+	* process proc's declarations and add to proc's environment
+*)
+let rec do_decls decls =
+	match decls with
+	| decl :: tail -> do_decl decl; do_decls tail;
+	| [] -> ();
+and do_decl decl =
+	let stack = new_ptr !curr_env in
+	match decl with
+	| Dvar (t, ident) -> let symbol = Var {
+			pass_by = Value;
+			ident = ident;
+			t = t;
+			stack = stack
+		} in
+		insert_symbol !curr_env ident symbol;
+	| Darr (t, ident, ranges) -> let symbol = Arr {
+			ident = ident;
+			t = t;
+			ranges = ranges;
+			stack = stack
+		} in
+		insert_symbol !curr_env ident symbol;;
+
+(* expr_type
+	* process expression's type and mark the expression's id to the resulting type
+*)
 let rec expr_type expr =
 	match expr with
-	| { expr = Ebool (_); id = id } ->
-		insert_type id Bool;
-		Bool;
-	| { expr = Eint (_); id = id } ->
-		insert_type id Int;
-		Int
-	| { expr = Efloat (_); id = id } ->
-		insert_type id Float;
-		Float
-	| { expr = EId (ident); id = id } -> (
-		match lookup_symbol !curr_env ident with
-		| Var {t = t} ->
-			insert_type id t;
-			t;
-		| _ -> print_string "Array identifier used without index\n"; exit 0;
+	| { expr = Ebool (_); id = id } -> insert_type id Bool; Bool; (* <- Why? *)
+	| { expr = Eint (_); id = id } -> insert_type id Int; Int;
+	| { expr = Efloat (_); id = id } -> insert_type id Float; Float
+	| { expr = EId (ident); id = id } ->
+		(
+			match lookup_symbol !curr_env ident with
+			| Var {t = t} -> insert_type id t; t;
+			| _ -> print_string "Array identifier used without index\n"; exit 0;
 		)
 	| { expr = Ebinop (lexpr, (binop, _, _), rexpr); id = id } ->
 		let ltype = expr_type lexpr in
 		let rtype = expr_type rexpr in
 		let newtype = check_binop binop ltype rtype in
 		insert_type id newtype;
-		newtype;
+		newtype; (* <- ?? *)
 	| { expr = Eunop ((unop, _, _), expr); id = id } ->
 		let t = expr_type expr in
 		let newtype = check_unop unop t in
 		insert_type id newtype;
 		newtype;
-	| { expr = Earray (ident, exprs); id = id } -> (
-		match lookup_symbol !curr_env ident with
-		| Arr {t = t; ranges = ranges} ->
-			check_indicies ranges exprs;
-			t;
-		| _ -> print_string "Non-array identifier used as array\n"; exit 0;
+	| { expr = Earray (ident, exprs); id = id } ->
+		(
+			match lookup_symbol !curr_env ident with
+			| Arr {t = t; ranges = ranges} -> check_indicies ranges exprs; t;
+			| _ -> print_string "Non-array identifier used as array\n"; exit 0;
 		)
-
 and check_indicies ranges exprs =
 	match ranges, exprs with
 	| [], [] -> ()
 	| [], _ -> print_string "Too many array indicies provided\n"; exit 0;
 	| _, [] -> print_string "Too few array indicies provided\n"; exit 0;
 	| (r::rs), (e::es) ->
-		if (expr_type e = Int) then
-			check_indicies rs es
-		else (print_string "Non-Int index provided for array\n"; exit 0);;
+		if (expr_type e = Int) then check_indicies rs es else
+		(print_string "Non-Int index provided for array\n"; exit 0);;
 
-let rec do_proc_args (args : variable list) exprs =
+(* do_proc
+* process procedure calls and ensure correct signature is given
+*)
+let rec do_proc ident exprs =
+	let {args = args} = lookup_proc ident in
+	check_proc_signature args exprs;
+and check_proc_signature (args : variable list) exprs =
 	match args, exprs with
 	| [], [] -> ()
 	| [], _ -> print_string "Too many procedure arguments provided\n"; exit 0;
 	| _, [] -> print_string "Too few procedure arguments provided\n"; exit 0;
 	| (a::atail), (e::etail) ->
 		let t = expr_type e in
-		if t = a.t then
-			do_proc_args atail etail
-		else (print_string "Incorrect procedure parameter type\n"; exit 0;);;
+		if t = a.t then check_proc_signature atail etail else
+		(print_string "Incorrect procedure parameter type\n"; exit 0;);;
 
-let do_proc ident exprs =
-	let {args = args} = lookup_proc ident in
-	do_proc_args args exprs;;
-
-let rec check_coerce t expr =
-	let t2 = expr_type expr in
-	if t = t2 then
-		()
-	else (assign_types t t2);
-
-and assign_types lt rt =
-	match lt, rt with
-	| Int, Int -> ()
-	| Float, Float -> ()
-	| Bool, Bool -> ()
-	| Float, Int -> ()
-	| _, _ -> print_string "Invalid assignment types\n"; exit 0;; 
-
-let do_assign lvalue rvalue =
+(* do_assign
+	* Check if assignment is valid - Check for value coercion if non-matching type
+*)
+let rec do_assign lvalue rvalue =
 	match lvalue with
 	| LId (ident) ->
 		(match lookup_symbol !curr_env ident with
@@ -222,35 +221,46 @@ let do_assign lvalue rvalue =
 		| _ -> print_string "Invalid assignment lvalue\n"; exit 0;
 		)
 	| Larray (ident, exprs) ->
-		(match lookup_symbol !curr_env ident with
-		| Arr {t = t; ranges = ranges} ->
-			check_indicies ranges exprs;
-			check_coerce t rvalue;
-		| _ -> print_string "Invalid array assignment lvalue\n"; exit 0;
-		);;
-		
+		(
+			match lookup_symbol !curr_env ident with
+				| Arr {t = t; ranges = ranges} ->
+					check_indicies ranges exprs;
+					check_coerce t rvalue;
+				| _ -> print_string "Invalid array assignment lvalue\n"; exit 0;
+		);
+and check_coerce t expr =
+	let t2 = expr_type expr in
+	if t = t2 then () else
+	(assign_types t t2);
+and assign_types lt rt =
+	match lt, rt with
+	| Int, Int -> ()
+	| Float, Float -> ()
+	| Bool, Bool -> ()
+	| Float, Int -> ()
+	| _, _ -> print_string "Invalid assignment types\n"; exit 0;;
 
+(* do_stmts
+* process statements and run appropriate analyser for each type of statement
+*)
 let rec do_stmts stmts =
 	match stmts with
-	| stmt :: tail ->
-		do_stmt stmt;
-		do_stmts tail;
+	| stmt :: tail ->	do_stmt stmt;	do_stmts tail;
 	| [] -> ();
-
 and do_stmt stmt =
 	match stmt with
 	| Assign (lvalue, rvalue) -> do_assign lvalue rvalue;
 	| Read lvalue -> ();
 	| Write expr -> let _ = expr_type expr in ();
 	| WriteS str -> ();
-	| Ifthen (expr, stmts) -> 
+	| Ifthen (expr, stmts) ->
 		if (expr_type expr != Bool) then (print_string "Guard is not a Bool\n"; exit 0);
 		do_stmts stmts;
-	| Ifthenelse (expr, tstmts, fstmts) -> 
+	| Ifthenelse (expr, tstmts, fstmts) ->
 		if (expr_type expr != Bool) then (print_string "Guard is not a Bool\n"; exit 0);
 		do_stmts tstmts;
 		do_stmts fstmts;
-	| While (expr, stmts) -> 
+	| While (expr, stmts) ->
 		if (expr_type expr != Bool) then (print_string "Guard is not a Bool\n"; exit 0);
 		do_stmts stmts;
 	| Proccall (ident, exprs) -> do_proc ident exprs;;
