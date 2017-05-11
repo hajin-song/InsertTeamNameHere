@@ -1,12 +1,10 @@
-proc main ()
+proc main()
 	int x;
-	float y;
-	bool z;
-	write -1.0;
-	write -1;
-	write -x;
-	write -(1 * 2.0);
+	write x;
 	if true then
-		write y + 5;
+		write 1 + 4;
+	else
+		write x;
 	fi
+	x := 2 * (5 * 3) - 1;
 end

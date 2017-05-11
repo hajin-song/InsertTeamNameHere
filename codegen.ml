@@ -20,8 +20,6 @@ let type_str fmt t =
 	| Float -> fprintf fmt "real";
 	| Bool -> fprintf fmt "bool";;
 
-let reg_str () = incr reg; sprintf "%i" !reg;;
-
 let cooerce fmt (lt, rt, lreg, rreg) =
 	match lt, rt with
 	| Int, Float ->
@@ -120,6 +118,12 @@ let print_write fmt ({ id = id } as expr) =
 	| Bool -> fprintf fmt "%a@,call_builtin print_bool" generate_expr expr;);
 	decr reg;;
 
+let print_guard fmt expr =
+	fprintf fmt "%a@,branch_on_false r0, label%i@]"
+	generate_expr expr
+	!label;
+	decr reg;;
+
 let rec generate_stmts fmt stmts =
 	match stmts with
 	| (stmt::tail) ->
@@ -133,13 +137,32 @@ and generate_stmt fmt stmt =
 		fprintf fmt "@,@[<v 4># write%a@]"
 		print_write expr;
 	| Ifthen (expr, stmts) ->
-		fprintf fmt "@,@[<v 4># if%a@,branch_on_false r%s, label%i@]%a@,label%i:"
-		generate_expr expr
-		(reg_str ()) !label
+		fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
+		print_guard expr
 		generate_stmts stmts
 		!label;
-		decr reg;
 		incr label;
+	| Ifthenelse (expr, tstmts, fstmts) ->
+		fprintf fmt "@,@[<v 4># if%a%a@,    branch_uncond label%i@,label%i:@,# else%a@,label%i:"
+		print_guard expr
+		generate_stmts tstmts
+		(!label + 1)
+		!label
+		generate_stmts fstmts
+		(!label + 1);
+		incr label;
+		incr label;
+	| Assign (LId (ident), expr) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Var { stack = stack } ->
+			fprintf fmt "@,@[<v 4># assignment%a@,store %i, r0@]"
+			generate_expr expr
+			stack;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+	| Assign (Larray (ident, exprs), expr) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Arr { stack = stack } -> ()
+		| _ -> print_string "Not implemented\n"; exit 0;)
 	| _ -> ();;
 
 let print_var fmt stack t =
