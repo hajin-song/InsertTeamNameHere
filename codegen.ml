@@ -4,6 +4,7 @@ open Format;;
 
 let indent = 4;;
 let reg = ref (-1);;
+let label = ref 0;;
 
 let scope : string Stack.t = Stack.create ();;
 
@@ -18,6 +19,8 @@ let type_str fmt t =
 	| Int -> fprintf fmt "int";
 	| Float -> fprintf fmt "real";
 	| Bool -> fprintf fmt "bool";;
+
+let reg_str () = incr reg; sprintf "%i" !reg;;
 
 let cooerce fmt (lt, rt, lreg, rreg) =
 	match lt, rt with
@@ -129,6 +132,14 @@ and generate_stmt fmt stmt =
 	| Write expr ->
 		fprintf fmt "@,@[<v 4># write%a@]"
 		print_write expr;
+	| Ifthen (expr, stmts) ->
+		fprintf fmt "@,@[<v 4># if%a@,branch_on_false r%s, label%i@]%a@,label%i:"
+		generate_expr expr
+		(reg_str ()) !label
+		generate_stmts stmts
+		!label;
+		decr reg;
+		incr label;
 	| _ -> ();;
 
 let print_var fmt stack t =

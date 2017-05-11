@@ -6,4 +6,7 @@ proc main ()
 	write -1;
 	write -x;
 	write -(1 * 2.0);
+	if true then
+		write y + 5;
+	fi
 end
