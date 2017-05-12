@@ -9,6 +9,8 @@
 %{
 open Snick_ast
 let expr_count = ref 0
+exception ParseErr of string
+let parser_error msg = raise (ParseErr (msg))
 %}
 /* TOKENS */
 %token <bool> BOOL_CONST
@@ -55,64 +57,72 @@ typespec :
   | BOOL { Bool }
   | INT { Int }
   | FLOAT { Float }
-
+  | error { parser_error "Error - type" }
 header :
   | IDENT LPAREN arguments RPAREN { ($1, List.rev $3) }
-
+  | error { parser_error "Error - header" }
 argument :
   | REF typespec IDENT { Ref ($3, $2) }
   | VAL typespec IDENT { Val ($3, $2) }
-
+  | error { parser_error "Error - arg" }
 arguments :
   | arguments COMMA argument { $3 :: $1 }
   | argument { [$1] }
   | { [] }
+  | error { parser_error "Error - args" }
 
 decl :
   | typespec IDENT SEMICOLON { Dvar ($1, $2) }
   | typespec IDENT LBRACKET range_list RBRACKET SEMICOLON { Darr ($1, $2, $4) }
-
+  | error { parser_error "Error - declaration" }
 decls :
   | decls decl { $2 :: $1 }
   | { [] }
+  | error { parser_error "Error - declarations" }
 
 range :
   | INT_CONST RANGE INT_CONST { ($1, $3) }
+  | error { parser_error "Error - range" }
 
 range_list :
   | range_list COMMA range { $3 :: $1 }
   | range { [$1] }
+  | error { parser_error "Error - ranges" }
 
 /* Builds stmts in reverse order */
 stmts:
   | stmts stmt { $2 :: $1 }
   | { [] }
-
+  | error { parser_error "Error - statements " }
 stmt :
   | stmt_body SEMICOLON { $1 }
   | IF expr THEN stmts FI { Ifthen ($2, List.rev $4) }
   | IF expr THEN stmts ELSE stmts FI { Ifthenelse ($2, List.rev $4, List.rev $6) }
   | WHILE expr DO stmts OD { While ($2, List.rev $4) }
-
+  | error { parser_error "Error - statement " }
 stmt_body:
   | READ lvalue { Read $2 }
   | WRITE expr { Write $2 }
   | WRITE STRING { WriteS $2 }
   | lvalue ASSIGN expr { Assign ($1, $3) }
   | IDENT LPAREN expr_list RPAREN { Proccall ($1, List.rev $3) }
+  | error { parser_error "Error - statement block" }
 
 lvalue:
   | IDENT { LId $1 }
   | IDENT LBRACKET arr_list RBRACKET { Larray ($1, List.rev $3) }
+  | error { parser_error "Error - l value" }
 
 expr_list:
   | expr_list COMMA expr { $3 :: $1 }
   | expr { [$1] }
   | { [] }
+  | error { parser_error "Error - expressions" }
 
 arr_list:
   | arr_list COMMA expr { $3 :: $1 }
   | expr { [$1] }
+  | error { parser_error "Error - array syntax" }
 
 /* Operator altered to include their precendents and associations*/
 expr:
@@ -137,3 +147,4 @@ expr:
   | NOT expr {incr expr_count; { expr = Eunop ((Op_not, Prec_not, Left_assoc), $2); id = !expr_count } }
   | MINUS expr %prec UMINUS {incr expr_count; { expr = Eunop ((Op_minus, Prec_uminus, Non_assoc), $2); id = !expr_count } }
   | LPAREN expr RPAREN { $2 }
+  | error  { parser_error "illegal structrue of expressions" }
