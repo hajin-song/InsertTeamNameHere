@@ -176,6 +176,8 @@ and generate_stmt fmt stmt =
 	match stmt with
 	| Write expr_value -> fprintf fmt "@,@[<v 4># write%a@]"
 		generate_write expr_value;
+	| WriteS string_value -> fprintf fmt "@,@[<v 4># write%a@]"
+		generate_write_string string_value
 	| Ifthen (expr, stmts) ->	fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
 		generate_guard expr
 		generate_stmts stmts
@@ -209,7 +211,9 @@ and generate_write fmt ({ id = id } as expr) =
 	| Int -> fprintf fmt "%a@,call_builtin print_int" generate_expr expr;
 	| Float -> fprintf fmt "%a@,call_builtin print_real" generate_expr expr;
 	| Bool -> fprintf fmt "%a@,call_builtin print_bool" generate_expr expr;);
-	decr reg; (* repeat? *)
+	decr reg;
+and generate_write_string fmt string_value =
+		fprintf fmt "@,string_const r0, \"%s\"@,call_builtin print_string" string_value
 and generate_guard fmt expr =
 	fprintf fmt "%a@,branch_on_false r0, label%i@]"
 	generate_expr expr

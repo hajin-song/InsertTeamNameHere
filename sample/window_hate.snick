@@ -5,10 +5,12 @@ proc main()
 
 	plz := true;
 	write 10;
-
+	write "\n";
 	if plz then
 		write 1;
+		write "\n";
 	else
 		write 0;
+		write "\n";
 	fi
 end

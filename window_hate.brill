@@ -15,12 +15,18 @@ proc_main:
 # write
     int_const r0, 10
     call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
 # if
     load r0, 0
     branch_on_false r0, label0
 # write
     int_const r0, 1
     call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
 # epilogue
     pop_stack_frame 3
     return
@@ -30,6 +36,9 @@ label0:
 # write
     int_const r0, 0
     call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
 # epilogue
     pop_stack_frame 3
     return
