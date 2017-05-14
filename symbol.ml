@@ -6,22 +6,22 @@ type pass_by =
 
 type variable = {
   pass_by : pass_by ;
-  ident : string ;
-  t : beantype ;
-  stack : int
+  var_ident : string ;
+  var_t : beantype ;
+  var_stack : int
 }
 
 type proc_t = {
-  ident : string ;
+  proc_ident : string ;
   args : variable list ;
   frame : int ref
 }
 
 type array = {
-  ident : string ;
-  t : beantype ;
+  arr_ident : string ;
+  arr_t : beantype ;
   ranges : range list ;
-  stack : int
+  arr_stack : int
 }
 
 type symbol_t =
@@ -47,7 +47,7 @@ let types : type_tbl_t = Hashtbl.create 100;;
 let insert_type id t =
   if Hashtbl.mem types id then
     (print_string "Duplicate attribute\n"; exit 0)
-  else 
+  else
     Hashtbl.add types id t;;
 
 let lookup_type id =
@@ -71,11 +71,11 @@ let proc_scope proc =
     Hashtbl.add scopes proc newProc;
     newProc);;
 
-let insert_proc (proc : proc_t) =
-  if Hashtbl.mem procs proc.ident then
+let insert_proc proc =
+  if Hashtbl.mem procs proc.proc_ident then
     (print_string "Duplicate procedure\n"; exit 0;)
   else
-    Hashtbl.add procs proc.ident proc;;
+    Hashtbl.add procs proc.proc_ident proc;;
 
 let lookup_proc ident =
   (* If not, check if it is a procedure identifier *)
@@ -84,7 +84,7 @@ let lookup_proc ident =
   else
     (print_string "Uninitialised identifier used\n"; exit 0);;
 
-let insert_symbol proc ident (symbol : symbol_t) =
+let insert_symbol proc ident symbol =
   let procScope = proc_scope proc in
   if Hashtbl.mem procScope ident then
     (print_string "Duplicate variable\n"; exit 0;)
@@ -95,7 +95,7 @@ let insert_symbol proc ident (symbol : symbol_t) =
 let new_ptr ident =
   let proc = Hashtbl.find procs ident in
   incr proc.frame;
-  !(proc.frame);;
+  !(proc.frame) - 1;;
 
 
 let lookup_symbol proc ident =

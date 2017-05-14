@@ -1,3 +1,14 @@
 proc main()
+	bool plz;
+	bool two;
+	bool three;
+
+	plz := true;
 	write 10;
+
+	if plz then
+		write 1;
+	else
+		write 0;
+	fi
 end

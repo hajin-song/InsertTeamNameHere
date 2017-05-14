@@ -100,18 +100,18 @@ and build_arg arg =
 	| Val (ident, t) ->
 		let symbol = {
 			pass_by = Value;
-			ident = ident;
-			t = t;
-			stack = !stack_ptr
+			var_ident = ident;
+			var_t = t;
+			var_stack = (!stack_ptr - 1)
 		} in
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;
 	| Ref (ident, t) ->
 		let symbol = {
 			pass_by = Reference;
-			ident = ident;
-			t = t;
-			stack = !stack_ptr
+			var_ident = ident;
+			var_t = t;
+			var_stack = (!stack_ptr - 1)
 		} in
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;;
@@ -127,7 +127,7 @@ and record_proc (ident, args) =
 	curr_env := ident;
 	stack_ptr := 0;
 	let proc_args = build_args args in
-	insert_proc {ident = ident; args = proc_args; frame = ref !stack_ptr};;
+	insert_proc {proc_ident = ident; args = proc_args; frame = ref !stack_ptr};;
 
 (* do_decls
 	* process proc's declarations and add to proc's environment
@@ -141,16 +141,16 @@ and do_decl decl =
 	match decl with
 	| Dvar (t, ident) -> let symbol = Var {
 			pass_by = Value;
-			ident = ident;
-			t = t;
-			stack = stack
+			var_ident = ident;
+			var_t = t;
+			var_stack = stack
 		} in
 		insert_symbol !curr_env ident symbol;
 	| Darr (t, ident, ranges) -> let symbol = Arr {
-			ident = ident;
-			t = t;
+			arr_ident = ident;
+			arr_t = t;
 			ranges = ranges;
-			stack = stack
+			arr_stack = stack
 		} in
 		insert_symbol !curr_env ident symbol;;
 
@@ -165,7 +165,7 @@ let rec expr_type expr =
 	| { expr = EId (ident); id = id } ->
 		(
 			match lookup_symbol !curr_env ident with
-			| Var {t = t} -> insert_type id t; t;
+			| Var {var_t = t} -> insert_type id t; t;
 			| _ -> print_string "Array identifier used without index\n"; exit 0;
 		)
 	| { expr = Ebinop (lexpr, (binop, _, _), rexpr); id = id } ->
@@ -173,7 +173,7 @@ let rec expr_type expr =
 		let rtype = expr_type rexpr in
 		let newtype = check_binop binop ltype rtype in
 		insert_type id newtype;
-		newtype; (* <- ?? *)
+		newtype;
 	| { expr = Eunop ((unop, _, _), expr); id = id } ->
 		let t = expr_type expr in
 		let newtype = check_unop unop t in
@@ -182,7 +182,7 @@ let rec expr_type expr =
 	| { expr = Earray (ident, exprs); id = id } ->
 		(
 			match lookup_symbol !curr_env ident with
-			| Arr {t = t; ranges = ranges} -> check_indicies ranges exprs; t;
+			| Arr {arr_t = t; ranges = ranges} -> check_indicies ranges exprs; t;
 			| _ -> print_string "Non-array identifier used as array\n"; exit 0;
 		)
 and check_indicies ranges exprs =
@@ -207,7 +207,7 @@ and check_proc_signature (args : variable list) exprs =
 	| _, [] -> print_string "Too few procedure arguments provided\n"; exit 0;
 	| (a::atail), (e::etail) ->
 		let t = expr_type e in
-		if t = a.t then check_proc_signature atail etail else
+		if t = a.var_t then check_proc_signature atail etail else
 		(print_string "Incorrect procedure parameter type\n"; exit 0;);;
 
 (* do_assign
@@ -217,13 +217,13 @@ let rec do_assign lvalue rvalue =
 	match lvalue with
 	| LId (ident) ->
 		(match lookup_symbol !curr_env ident with
-		| Var {t = t} -> check_coerce t rvalue;
+		| Var {var_t = t} -> check_coerce t rvalue;
 		| _ -> print_string "Invalid assignment lvalue\n"; exit 0;
 		)
 	| Larray (ident, exprs) ->
 		(
 			match lookup_symbol !curr_env ident with
-				| Arr {t = t; ranges = ranges} ->
+				| Arr {arr_t = t; ranges = ranges} ->
 					check_indicies ranges exprs;
 					check_coerce t rvalue;
 				| _ -> print_string "Invalid array assignment lvalue\n"; exit 0;

@@ -1,0 +1,39 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 3
+    int_const r0, 0
+    store 0, r0
+    int_const r0, 0
+    store 1, r0
+    int_const r0, 0
+    store 2, r0
+# assignment
+    int_const r0, 1
+    store 0, r0
+# write
+    int_const r0, 10
+    call_builtin print_int
+# if
+    load r0, 0
+    branch_on_false r0, label0
+# write
+    int_const r0, 1
+    call_builtin print_int
+# epilogue
+    pop_stack_frame 3
+    return
+    branch_uncond label1
+label0:
+# else
+# write
+    int_const r0, 0
+    call_builtin print_int
+# epilogue
+    pop_stack_frame 3
+    return
+label1:
+# epilogue
+    pop_stack_frame 3
+    return

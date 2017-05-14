@@ -77,7 +77,7 @@ let print_var fmt stack t =
 	match t with
 	| Int ->	fprintf fmt "int_const r0, 0@,store %i, r0" stack;
 	| Float ->	fprintf fmt "real_const r0, 0@,store %i, r0" stack;
-	| Bool -> fprintf fmt "bool_const r0, 0@,store %i, r0" stack;;
+	| Bool -> fprintf fmt "int_const r0, 0@,store %i, r0" stack;;
 
 (*
 	* print_arg
@@ -147,7 +147,7 @@ let rec generate_expr fmt expr =
 		fprintf fmt "@,real_const r%i, %f" !reg value;
 	| { expr = EId (ident); id = id } ->
 		(match lookup_symbol (this_scope()) ident with
-		| Var {stack = stack} ->
+		| Var {var_stack = stack} ->
 			incr reg;
 			fprintf fmt "@,load r%i, %i" !reg stack;
 		| _ -> print_string "Not implemented\n"; exit 0;)
@@ -169,7 +169,9 @@ let rec generate_expr fmt expr =
 let rec generate_stmts fmt stmts =
 	match stmts with
 	| (stmt::tail) -> generate_stmt fmt stmt; generate_stmts fmt tail;
-	| [] -> ();
+	| [] ->
+		let {frame = frame} = lookup_proc (this_scope ()) in
+		fprintf fmt "@,@[<v 4># epilogue@,pop_stack_frame %i@,return@]" !frame;
 and generate_stmt fmt stmt =
 	match stmt with
 	| Write expr_value -> fprintf fmt "@,@[<v 4># write%a@]"
@@ -191,14 +193,15 @@ and generate_stmt fmt stmt =
 		incr label;
 	| Assign (LId (ident), expr) ->
 		(match lookup_symbol (this_scope()) ident with
-		| Var { stack = stack } ->
+		| Var { var_stack = stack } ->
 			fprintf fmt "@,@[<v 4># assignment%a@,store %i, r0@]"
 			generate_expr expr
 			stack;
+			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;)
 	| Assign (Larray (ident, exprs), expr) ->
 		(match lookup_symbol (this_scope()) ident with
-		| Arr { stack = stack } -> ()
+		| Arr { arr_stack = stack } -> ()
 		| _ -> print_string "Not implemented\n"; exit 0;)
 	| _ -> ();
 and generate_write fmt ({ id = id } as expr) =
@@ -230,7 +233,7 @@ and generate_decl fmt decl =
 		| Darr x -> generate_arr fmt x;
 and generate_var fmt (t, ident) =
 	match lookup_symbol (this_scope()) ident with
-	| Var {stack = stack} -> print_var fmt stack t;
+	| Var {var_stack = stack} -> print_var fmt stack t;
 	| _ -> print_string "Not implemented\n"; exit 0;
 and generate_arr fmt arr = ();;
 
@@ -258,11 +261,11 @@ and generate_arg fmt (n, arg) =
 let rec generate_procs fmt prog =
 	match prog with
 	| {header = header; decls = decls; stmts = stmts} :: tail ->
-		fprintf fmt "%a%a@]%a%a"
-		generate_header header
-		generate_decls decls
-		generate_stmts stmts
-		generate_procs tail
+			fprintf fmt "%a%a@]%a%a"
+			generate_header header
+			generate_decls decls
+			generate_stmts stmts
+			generate_procs tail
 	| [] -> ();;
 
 let generate prog =

@@ -2,36 +2,10 @@
     halt
 proc_main:
 # prologue
-    push_stack_frame 1
-    int_const r0, 0
-    store 1, r0
-# assignment
+    push_stack_frame 0
+# write
     int_const r0, 10
-    store 1, r0
-# write
-    int_const r1, 10
     call_builtin print_int
-# if
-    int_const r1, 1
-    branch_on_false r0, label0
-# write
-    int_const r1, 1
-    int_const r2, 4
-    add_int r1, r1, r2
-    call_builtin print_int
-    branch_uncond label1
-label0:
-# else
-# write
-    load r1, 1
-    call_builtin print_int
-label1:
-# assignment
-    int_const r1, 2
-    int_const r2, 5
-    int_const r3, 3
-    mul_int r2, r2, r3
-    mul_int r1, r1, r2
-    int_const r2, 1
-    sub_int r1, r1, r2
-    store 1, r0
+# epilogue
+    pop_stack_frame 0
+    return
