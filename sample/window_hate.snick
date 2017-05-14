@@ -1,6 +1,9 @@
 proc main()
+	if if while fi od fi
+	&
 	int x;
-	
+	in z;
+	not_a_single_f y;	
 	write x;
 	if true then
 		write 1+4;
