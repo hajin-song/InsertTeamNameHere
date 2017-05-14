@@ -1,3 +1,11 @@
+(*
+ * codegen.ml
+ * Brill generator
+ * Created By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu L
+ * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
+ * Last Modified: 11-MAY-2017
+ *)
+
 open Snick_ast;;
 open Symbol;;
 open Format;;
@@ -14,23 +22,32 @@ let return () = Stack.pop scope;;
 
 let this_scope () = Stack.top scope;;
 
-let type_str fmt t =
+(* ========================================================================== *)
+(* Plain print formatting functions *)
+(* used by generators for their brill command generation *)
+
+(*	print_type
+	* prints out type string
+*)
+let print_type fmt t =
 	match t with
 	| Int -> fprintf fmt "int";
 	| Float -> fprintf fmt "real";
 	| Bool -> fprintf fmt "bool";;
 
-let cooerce fmt (lt, rt, lreg, rreg) =
+(* print_coercion
+	* print out coercion command
+*)
+let print_coercion fmt (lt, rt, lreg, rreg) =
 	match lt, rt with
-	| Int, Float ->
-		fprintf fmt "@,int_to_real r%i, r%i"
-		lreg lreg;
-	| Float, Int ->
-		fprintf fmt "@,int_to_real r%i, r%i"
-		rreg rreg;
+	| Int, Float -> fprintf fmt "@,int_to_real r%i, r%i" lreg lreg;
+	| Float, Int -> fprintf fmt "@,int_to_real r%i, r%i" rreg rreg;
 	| _, _ -> ();;
 
-let binop_str fmt op =
+(* print_binop
+	* prints out command for binary operator - OPERATION STRING ONLY
+*)
+let print_binop fmt op =
 	match op with
 	| Op_add -> fprintf fmt "add_";
 	| Op_sub -> fprintf fmt "sub_";
@@ -45,12 +62,40 @@ let binop_str fmt op =
 	| Op_and -> fprintf fmt "and";
 	| Op_or -> fprintf fmt "or";;
 
-let unop_str fmt op =
+(* print_unop
+	* prints out command for unary operator - OPERATION STRING ONLY
+*)
+let print_unop fmt op =
 	match op with
 	| Op_not -> fprintf fmt "not";
 	| Op_minus -> ();;
 
-let print_binop fmt (id, op, { id = lid }, { id = rid }) =
+(* print_var
+	* print out brill command for variable storage
+*)
+let print_var fmt stack t =
+	match t with
+	| Int ->	fprintf fmt "int_const r0, 0@,store %i, r0" stack;
+	| Float ->	fprintf fmt "real_const r0, 0@,store %i, r0" stack;
+	| Bool -> fprintf fmt "bool_const r0, 0@,store %i, r0" stack;;
+
+(*
+	* print_arg
+	* print out brill command for arguments loading during function call
+*)
+let print_arg fmt t n =
+	match t with
+	| Int -> fprintf fmt "store %i, r%i" n n;
+	| Float -> fprintf fmt "store %i, r%i" n n;
+	| Bool -> fprintf fmt "store %i, r%i" n n;;
+
+(* ========================================================================== *)
+
+(*
+	* generate_binop
+	* prints brills binary operator command
+*)
+let generate_binop fmt (id, op, { id = lid }, { id = rid }) =
 	let rreg = !reg in
 	decr reg;
 	let lreg = !reg in
@@ -66,20 +111,26 @@ let print_binop fmt (id, op, { id = lid }, { id = rid }) =
 		lreg lreg rreg;
 	| _ ->
 		fprintf fmt "%a@,%a%a r%i, r%i, r%i"
-		cooerce (lt, rt, lreg, rreg)
-		binop_str op
-		type_str t
+		print_coercion (lt, rt, lreg, rreg)
+		print_binop op
+		print_type t
 		lreg lreg rreg;;
 
-let print_unop fmt (op, { id = id }) =
+(* generate_unop
+	* prints brills unary operator command
+*)
+let generate_unop fmt (op, { id = id }) =
 	match op with
 	| Op_not ->
 		fprintf fmt "@,not r%i, r%i" !reg !reg
 	| Op_minus ->
 		let t = lookup_type id in
 		fprintf fmt "@,%a_const r%i, -1@,mul_%a r%i, r%i, r%i"
-		type_str t (!reg + 1) type_str t !reg !reg (!reg + 1);;
+		print_type t (!reg + 1) print_type t !reg !reg (!reg + 1);;
 
+(* generate_expr
+	* prints brill command for expressions
+*)
 let rec generate_expr fmt expr =
 	match expr with
 	| { expr = Ebool (value); id = id } ->
@@ -104,51 +155,37 @@ let rec generate_expr fmt expr =
 		fprintf fmt "%a%a%a"
 		generate_expr lexpr
 		generate_expr rexpr
-		print_binop (id, op, lexpr, rexpr);
+		generate_binop (id, op, lexpr, rexpr);
 	| { expr = Eunop ((op, _, _), expr) } ->
 		fprintf fmt "%a%a"
 		generate_expr expr
-		print_unop (op, expr);
+		generate_unop (op, expr);
 	| { expr = Earray (ident, exprs) } -> ();;
 
-let print_write fmt ({ id = id } as expr) =
-	(match lookup_type id with
-	| Int -> fprintf fmt "%a@,call_builtin print_int" generate_expr expr;
-	| Float -> fprintf fmt "%a@,call_builtin print_real" generate_expr expr;
-	| Bool -> fprintf fmt "%a@,call_builtin print_bool" generate_expr expr;);
-	decr reg;;
-
-let print_guard fmt expr =
-	fprintf fmt "%a@,branch_on_false r0, label%i@]"
-	generate_expr expr
-	!label;
-	decr reg;;
-
+(* Statement Declaration
+	* Recursively generates statements within the current proc
+	* Each generator formats out its respective brill command
+*)
 let rec generate_stmts fmt stmts =
 	match stmts with
-	| (stmt::tail) ->
-		generate_stmt fmt stmt;
-		generate_stmts fmt tail;
+	| (stmt::tail) -> generate_stmt fmt stmt; generate_stmts fmt tail;
 	| [] -> ();
-
 and generate_stmt fmt stmt =
 	match stmt with
-	| Write expr ->
-		fprintf fmt "@,@[<v 4># write%a@]"
-		print_write expr;
-	| Ifthen (expr, stmts) ->
-		fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
-		print_guard expr
+	| Write expr_value -> fprintf fmt "@,@[<v 4># write%a@]"
+		generate_write expr_value;
+	| Ifthen (expr, stmts) ->	fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
+		generate_guard expr
 		generate_stmts stmts
 		!label;
 		incr label;
-	| Ifthenelse (expr, tstmts, fstmts) ->
+	| Ifthenelse (expr_guard, stmts_then, stmts_else) ->
 		fprintf fmt "@,@[<v 4># if%a%a@,    branch_uncond label%i@,label%i:@,# else%a@,label%i:"
-		print_guard expr
-		generate_stmts tstmts
+		generate_guard expr_guard
+		generate_stmts stmts_then
 		(!label + 1)
 		!label
-		generate_stmts fstmts
+		generate_stmts stmts_else
 		(!label + 1);
 		incr label;
 		incr label;
@@ -163,64 +200,60 @@ and generate_stmt fmt stmt =
 		(match lookup_symbol (this_scope()) ident with
 		| Arr { stack = stack } -> ()
 		| _ -> print_string "Not implemented\n"; exit 0;)
-	| _ -> ();;
+	| _ -> ();
+and generate_write fmt ({ id = id } as expr) =
+	(match lookup_type id with
+	| Int -> fprintf fmt "%a@,call_builtin print_int" generate_expr expr;
+	| Float -> fprintf fmt "%a@,call_builtin print_real" generate_expr expr;
+	| Bool -> fprintf fmt "%a@,call_builtin print_bool" generate_expr expr;);
+	decr reg; (* repeat? *)
+and generate_guard fmt expr =
+	fprintf fmt "%a@,branch_on_false r0, label%i@]"
+	generate_expr expr
+	!label;
+	decr reg;; (* repeat? *)
 
-let print_var fmt stack t =
-	match t with
-	| Int ->
-		fprintf fmt "int_const r0, 0@,store %i, r0" stack;
-	| Float ->
-		fprintf fmt "real_const r0, 0@,store %i, r0" stack;
-	| Bool ->
-		fprintf fmt "bool_const r0, 0@,store %i, r0" stack;;
-
-let generate_var fmt (t, ident) =
-	match lookup_symbol (this_scope()) ident with
-	| Var {stack = stack} -> print_var fmt stack t;
-	| _ -> print_string "Not implemented\n"; exit 0;;
-
-let generate_arr fmt arr = ();;
-
-let generate_decl fmt decl =
-	match decl with
-	| Dvar x -> generate_var fmt x;
-	| Darr x -> generate_arr fmt x;;
-
+(* Declaration generator
+	* Recursively generates declaration within the current proc
+	* Either Variable or Array declaration
+*)
 let rec generate_decls fmt decls =
 	match decls with
 	| (decl::tail) ->
 		fprintf fmt "@,%a%a"
 		generate_decl decl
 		generate_decls tail;
-	| [] -> ();;
+	| [] -> ();
+and generate_decl fmt decl =
+		match decl with
+		| Dvar x -> generate_var fmt x;
+		| Darr x -> generate_arr fmt x;
+and generate_var fmt (t, ident) =
+	match lookup_symbol (this_scope()) ident with
+	| Var {stack = stack} -> print_var fmt stack t;
+	| _ -> print_string "Not implemented\n"; exit 0;
+and generate_arr fmt arr = ();;
 
-let rec generate_args fmt (n, args) =
+(* Header generator
+	* Generator for header of the proc
+	* Recursively generates the proc's argument list
+*)
+let rec generate_header fmt (ident, args) =
+	call ident;
+	let {frame = frame} = lookup_proc ident in
+	fprintf fmt "proc_%s:@,@[<v 4># prologue@,push_stack_frame %i%a"
+	ident !frame generate_args (1, args);
+and generate_args fmt (n, args) =
 	match args with
 	| (arg::tail) ->
 		fprintf fmt "@,%a%a"
 		generate_arg (n, arg)
 		generate_args (n, tail);
 	| [] -> ();
-
-and generate_arg fmt (n, arg) = 
+and generate_arg fmt (n, arg) =
 	match arg with
 	| Val (_, t) -> print_arg fmt t n;
-	| Ref (_, t) -> ();
-
-and print_arg fmt t n =
-	match t with
-	| Int ->
-		fprintf fmt "store %i, r%i" n n;
-	| Float ->
-		fprintf fmt "store %i, r%i" n n;
-	| Bool ->
-		fprintf fmt "store %i, r%i" n n;;
-
-let generate_header fmt (ident, args) =
-	call ident;
-	let {frame = frame} = lookup_proc ident in
-	fprintf fmt "proc_%s:@,@[<v 4># prologue@,push_stack_frame %i%a"
-	ident !frame generate_args (1, args);;
+	| Ref (_, t) -> ();;
 
 let rec generate_procs fmt prog =
 	match prog with

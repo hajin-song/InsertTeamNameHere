@@ -8,7 +8,16 @@
 
 {
 open Snick_parse
+
+(* For tracking current line number *)
+let line_num = ref 1;;
+
+(* Error handling *)
+exception Syntax_error of string
+let syntax_error msg s = raise (Syntax_error (msg ^": "^ (Char.escaped s)^ " on line " ^ (string_of_int !line_num)));;
 }
+
+
 
 let digit = ['0' - '9']
 let alpha = ['a' - 'z' 'A' - 'Z']
@@ -65,3 +74,4 @@ rule token = parse
   | '\"'    { QUOTE }
   | ident as lxm { IDENT lxm }
   | eof { EOF }
+  | _  as s { syntax_error "Couldn't identify the token" s }

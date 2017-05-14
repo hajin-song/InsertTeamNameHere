@@ -1,0 +1,11 @@
+proc main()
+	int x;
+	
+	write x;
+	if true then
+		write 1+4;
+	else
+		write x;
+	fi
+	x := 2 * (5 * 3) - 1;
+end
