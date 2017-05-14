@@ -9,3 +9,4 @@ snick_ast.mli
 snick_parse.ml
 snick_parse.mli
 sample/.gentest.snick.swp
+brill/*
