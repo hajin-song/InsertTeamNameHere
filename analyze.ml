@@ -207,10 +207,15 @@ and check_proc_signature (args : variable list) exprs =
 	| [], [] -> ()
 	| [], _ -> print_string "Too many procedure arguments provided\n"; exit 0;
 	| _, [] -> print_string "Too few procedure arguments provided\n"; exit 0;
-	| (a::atail), (e::etail) ->
+	| ({pass_by = Reference; var_t = var_t}::atail), ({expr = EId ident} as e::etail) ->
 		let t = expr_type e in
-		if t = a.var_t then check_proc_signature atail etail else
-		(print_string "Incorrect procedure parameter type\n"; exit 0;);;
+		if t = var_t then check_proc_signature atail etail else
+		(print_string "Incorrect procedure parameter type\n"; exit 0;);
+	| ({pass_by = Value; var_t = var_t}::atail), (e::etail) ->
+		let t = expr_type e in
+		if t = var_t then check_proc_signature atail etail else
+		(print_string "Incorrect procedure parameter type\n"; exit 0;);
+	| _ -> print_string "Pass by reference not given a variable\n"; exit 0;;
 
 (* do_assign
 	* Check if assignment is valid - Check for value coercion if non-matching type
