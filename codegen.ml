@@ -176,8 +176,9 @@ and generate_stmt fmt stmt =
 	match stmt with
 	| Read (LId ident) ->
 		(match lookup_symbol (this_scope()) ident with
-		| Var { var_stack = stack } ->
-			fprintf fmt "@,@[<v 4># read@,call_builtin read_int@,store %i, r0@]"
+		| Var { var_stack = stack; var_t = var_t } ->
+			fprintf fmt "@,@[<v 4># read@,call_builtin read_%a@,store %i, r0@]"
+			print_type var_t
 			stack;
 		| _ -> print_string "Not implemented\n"; exit 0;)
 	| Read (Larray (ident, exprs)) -> ()
