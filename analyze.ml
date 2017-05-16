@@ -214,6 +214,7 @@ and check_proc_signature (args : variable list) exprs =
 	| ({pass_by = Value; var_t = var_t}::atail), (e::etail) ->
 		let t = expr_type e in
 		if t = var_t then check_proc_signature atail etail else
+		if t = Int && var_t = Float then check_proc_signature atail etail else
 		(print_string "Incorrect procedure parameter type\n"; exit 0;);
 	| _ -> print_string "Pass by reference not given a variable\n"; exit 0;;
 

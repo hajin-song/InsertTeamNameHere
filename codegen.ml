@@ -211,13 +211,13 @@ and generate_stmt fmt stmt =
 		| Var { pass_by = Value; var_stack = stack; var_t = t } ->
 			fprintf fmt "@,@[<v 4># assignment%a%a@,store %i, r0@]"
 			generate_expr expr
-			assign_coerce (expr, t)
+			var_coerce (expr, t, !reg + 1)
 			stack;
 			decr reg;
 		| Var { pass_by = Reference; var_stack = stack; var_t = t } ->
 			fprintf fmt "@,@[<v 4># assignment%a%a@,load r1, %i@,store_indirect r1, r0@]"
 			generate_expr expr
-			assign_coerce (expr, t)
+			var_coerce (expr, t, !reg + 1)
 			stack;
 			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;)
@@ -257,9 +257,10 @@ and generate_guard fmt (expr, l) =
 	decr reg;
 and generate_arg_exprs fmt (args, exprs) =
 	match args, exprs with
-	| { pass_by = Value }::atail, expr::etail ->
-		fprintf fmt "%a%a"
+	| { pass_by = Value; var_t = var_t }::atail, expr::etail ->
+		fprintf fmt "%a%a%a"
 		generate_expr expr
+		var_coerce (expr, var_t, !reg + 1)
 		generate_arg_exprs (atail, etail);
 	| { pass_by = Reference }::atail, { expr = EId ident }::etail ->
 		fprintf fmt "%a%a"
@@ -274,9 +275,9 @@ and generate_arg_ref fmt ident =
 		!reg
 		stack;
 	| _ -> print_string "Not implemented\n"; exit 0;
-and assign_coerce fmt ({id = id}, t) =
+and var_coerce fmt ({id = id}, t, r) =
 	let t2 = lookup_type id in
-	if t = Float && t2 = Int then fprintf fmt "@,int_to_real r0, r0";;
+	if t = Float && t2 = Int then fprintf fmt "@,int_to_real r%i, r%i" r r;;
 
 (* Declaration generator
 	* Recursively generates declaration within the current proc
