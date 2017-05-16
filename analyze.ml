@@ -92,17 +92,19 @@ let check_unop unop t =
 	*)
 let rec build_args args =
 	match args with
-	| arg :: tail -> (build_arg arg) :: build_args tail;
+	| arg :: tail ->
+		let n = !stack_ptr in
+		incr stack_ptr;
+		build_arg (arg, n) :: build_args tail;
 	| [] -> [];
-and build_arg arg =
-	incr stack_ptr;
+and build_arg (arg, n) =
 	match arg with
 	| Val (ident, t) ->
 		let symbol = {
 			pass_by = Value;
 			var_ident = ident;
 			var_t = t;
-			var_stack = (!stack_ptr - 1)
+			var_stack = n
 		} in
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;
@@ -111,7 +113,7 @@ and build_arg arg =
 			pass_by = Reference;
 			var_ident = ident;
 			var_t = t;
-			var_stack = (!stack_ptr - 1)
+			var_stack = n
 		} in
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;;

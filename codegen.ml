@@ -95,7 +95,7 @@ let print_arg fmt t n =
 	* generate_binop
 	* prints brills binary operator command
 *)
-let generate_binop fmt (id, op, { id = lid }, { id = rid }) =
+let rec generate_binop fmt (id, op, { id = lid }, { id = rid }) =
 	let rreg = !reg in
 	decr reg;
 	let lreg = !reg in
@@ -113,8 +113,17 @@ let generate_binop fmt (id, op, { id = lid }, { id = rid }) =
 		fprintf fmt "%a@,%a%a r%i, r%i, r%i"
 		print_coercion (lt, rt, lreg, rreg)
 		print_binop op
-		print_type t
-		lreg lreg rreg;;
+		print_binop_type (t, lt, rt)
+		lreg lreg rreg;
+
+and print_binop_type fmt (t1, t2, t3) =
+	match t1, t2, t3 with
+	| Bool, _, Float -> fprintf fmt "float"
+	| Bool, Float, _ -> fprintf fmt "float"
+	| Bool, Int, Int -> fprintf fmt "int"
+	| Int, _, _ -> fprintf fmt "int"
+	| Float, _, _ -> fprintf fmt "float"
+	| _ -> fprintf fmt "bool";;
 
 (* generate_unop
 	* prints brills unary operator command
@@ -169,16 +178,17 @@ let rec generate_expr fmt expr =
 let rec generate_stmts fmt stmts =
 	match stmts with
 	| (stmt::tail) -> generate_stmt fmt stmt; generate_stmts fmt tail;
-	| [] ->
-		let {frame = frame} = lookup_proc (this_scope ()) in
-		fprintf fmt "@,@[<v 4># epilogue@,pop_stack_frame %i@,return@]" !frame;
+	| [] -> ()
 and generate_stmt fmt stmt =
 	match stmt with
-	| Write expr_value -> fprintf fmt "@,@[<v 4># write%a@]"
+	| Write expr_value ->
+		fprintf fmt "@,@[<v 4># write%a@]"
 		generate_write expr_value;
-	| WriteS string_value -> fprintf fmt "@,@[<v 4># write%a@]"
+	| WriteS string_value ->
+		fprintf fmt "@,@[<v 4># write%a@]"
 		generate_write_string string_value
-	| Ifthen (expr, stmts) ->	fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
+	| Ifthen (expr, stmts) ->
+		fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
 		generate_guard expr
 		generate_stmts stmts
 		!label;
@@ -205,6 +215,20 @@ and generate_stmt fmt stmt =
 		(match lookup_symbol (this_scope()) ident with
 		| Arr { arr_stack = stack } -> ()
 		| _ -> print_string "Not implemented\n"; exit 0;)
+	| While (expr_guard, stmts) ->
+		incr label;
+		fprintf fmt "@,# while@,@[<v 4>label%i:%a%a@,    branch_uncond label%i"
+		(!label - 1)
+		generate_guard expr_guard
+		generate_stmts stmts
+		(!label -1);
+		incr label;
+	| Proccall (ident, exprs) ->
+		let save_reg = !reg in
+		fprintf fmt "@,@[<v 4># proc call%a@,call proc_%s@]"
+		generate_arg_exprs exprs
+		ident;
+		reg := save_reg;
 	| _ -> ();
 and generate_write fmt ({ id = id } as expr) =
 	(match lookup_type id with
@@ -218,7 +242,14 @@ and generate_guard fmt expr =
 	fprintf fmt "%a@,branch_on_false r0, label%i@]"
 	generate_expr expr
 	!label;
-	decr reg;; (* repeat? *)
+	decr reg;
+and generate_arg_exprs fmt exprs =
+	match exprs with
+	| expr::tail ->
+		fprintf fmt "%a%a"
+		generate_expr expr
+		generate_arg_exprs tail;
+	| [] -> ();;
 
 (* Declaration generator
 	* Recursively generates declaration within the current proc
@@ -248,31 +279,42 @@ and generate_arr fmt arr = ();;
 let rec generate_header fmt (ident, args) =
 	call ident;
 	let {frame = frame} = lookup_proc ident in
-	fprintf fmt "proc_%s:@,@[<v 4># prologue@,push_stack_frame %i%a"
-	ident !frame generate_args (1, args);
-and generate_args fmt (n, args) =
+	fprintf fmt "@,proc_%s:@,@[<v 4># prologue@,push_stack_frame %i%a"
+	ident !frame generate_args args;
+	reg := -1;
+and generate_args fmt args =
 	match args with
 	| (arg::tail) ->
 		fprintf fmt "@,%a%a"
-		generate_arg (n, arg)
-		generate_args (n, tail);
+		generate_arg arg
+		generate_args tail;
 	| [] -> ();
-and generate_arg fmt (n, arg) =
+and generate_arg fmt arg =
 	match arg with
-	| Val (_, t) -> print_arg fmt t n;
-	| Ref (_, t) -> ();;
+	| Val (ident, t) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Var {var_stack = stack} ->
+			incr reg;
+			print_arg fmt t stack;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+	| Ref (ident, t) -> ();;
 
 let rec generate_procs fmt prog =
 	match prog with
-	| {header = header; decls = decls; stmts = stmts} :: tail ->
-			fprintf fmt "%a%a@]%a%a"
-			generate_header header
-			generate_decls decls
-			generate_stmts stmts
-			generate_procs tail
-	| [] -> ();;
+	| {header = (proc, args) as header; decls = decls; stmts = stmts} :: tail ->
+		reg := -1;
+		fprintf fmt "%a%a@]%a%a%a"
+		generate_header header
+		generate_decls decls
+		generate_stmts stmts
+		generate_epilogue proc
+		generate_procs tail;
+	| [] -> ();
+and generate_epilogue fmt proc =
+	let {frame = frame} = lookup_proc proc in
+	fprintf fmt "@,@[<v 4># epilogue@,pop_stack_frame %i@,return@,@]" !frame;;
 
 let generate prog =
 	let fmt = Format.std_formatter in
-	fprintf fmt "@[<v>@[<v 4>    call proc_main@,halt@]@,%a@,@]"
+	fprintf fmt "@[<v>@[<v 4>    call proc_main@,halt@]%a@,@]"
 	generate_procs prog;;
