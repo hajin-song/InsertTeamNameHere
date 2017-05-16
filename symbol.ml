@@ -97,6 +97,11 @@ let new_ptr ident =
   incr proc.frame;
   !(proc.frame) - 1;;
 
+let new_arr_ptr ident size =
+  let proc = Hashtbl.find procs ident in
+  let ptr = !(proc.frame) in
+  proc.frame := ptr + size;
+  ptr;;
 
 let lookup_symbol proc ident =
   (* Get the current proc's scope *)

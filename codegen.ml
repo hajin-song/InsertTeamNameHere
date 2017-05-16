@@ -151,7 +151,8 @@ let rec generate_expr fmt expr =
 			fprintf fmt "@,load r%i, %i" !reg stack;
 		| Var { pass_by = Reference; var_stack = stack } ->
 			incr reg;
-			fprintf fmt "@,load r%i, %i@,load_indirect r%i, r%i" !reg stack !reg !reg;
+			fprintf fmt "@,load r%i, %i@,load_indirect r%i, r%i"
+			!reg stack !reg !reg;
 		| _ -> print_string "Not implemented\n"; exit 0;)
 	| { expr = Ebinop (lexpr, (op, _, _), rexpr); id = id } ->
 		fprintf fmt "%a%a%a"

@@ -139,22 +139,36 @@ let rec do_decls decls =
 	| decl :: tail -> do_decl decl; do_decls tail;
 	| [] -> ();
 and do_decl decl =
-	let stack = new_ptr !curr_env in
 	match decl with
-	| Dvar (t, ident) -> let symbol = Var {
-			pass_by = Value;
-			var_ident = ident;
-			var_t = t;
-			var_stack = stack
-		} in
-		insert_symbol !curr_env ident symbol;
-	| Darr (t, ident, ranges) -> let symbol = Arr {
-			arr_ident = ident;
-			arr_t = t;
-			ranges = ranges;
-			arr_stack = stack
-		} in
-		insert_symbol !curr_env ident symbol;;
+	| Dvar (t, ident) -> do_var_decl t ident;
+	| Darr (t, ident, ranges) -> do_arr_decl t ident ranges;
+and do_var_decl t ident =
+	let stack = new_ptr !curr_env in
+	let symbol = Var {
+		pass_by = Value;
+		var_ident = ident;
+		var_t = t;
+		var_stack = stack
+	} in
+	insert_symbol !curr_env ident symbol;
+and do_arr_decl t ident ranges =
+	let size = arr_size ranges in
+	let stack = new_arr_ptr !curr_env size in
+	let symbol = Arr {
+		arr_ident = ident;
+		arr_t = t;
+		ranges = ranges;
+		arr_stack = stack
+	} in
+	insert_symbol !curr_env ident symbol;
+and arr_size ranges =
+	match ranges with
+	| (lo,hi)::tail ->
+		if lo > hi then
+			(print_string "Invalid array range\n"; exit 0)
+		else
+			(hi + 1 - lo) * (arr_size tail);
+	| [] -> 1;;
 
 (* expr_type
 	* process expression's type and mark the expression's id to the resulting type
