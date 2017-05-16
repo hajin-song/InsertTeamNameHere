@@ -181,6 +181,13 @@ let rec generate_stmts fmt stmts =
 	| [] -> ()
 and generate_stmt fmt stmt =
 	match stmt with
+	| Read (LId ident) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Var { var_stack = stack } ->
+			fprintf fmt "@,@[<v 4># read@,call_builtin read_int@,store %i, r0@]"
+			stack;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+	| Read (Larray (ident, exprs)) -> ()
 	| Write expr_value ->
 		fprintf fmt "@,@[<v 4># write%a@]"
 		generate_write expr_value;
@@ -217,19 +224,18 @@ and generate_stmt fmt stmt =
 		| _ -> print_string "Not implemented\n"; exit 0;)
 	| While (expr_guard, stmts) ->
 		incr label;
-		fprintf fmt "@,# while@,@[<v 4>label%i:%a%a@,    branch_uncond label%i"
+		fprintf fmt "@,# while@,@[<v 4>label%i:%a%a@,    branch_uncond label%i@,label%i:"
 		(!label - 1)
 		generate_guard expr_guard
 		generate_stmts stmts
-		(!label -1);
+		(!label -1)
+		!label;
 		incr label;
 	| Proccall (ident, exprs) ->
-		let save_reg = !reg in
 		fprintf fmt "@,@[<v 4># proc call%a@,call proc_%s@]"
 		generate_arg_exprs exprs
 		ident;
-		reg := save_reg;
-	| _ -> ();
+		reg := -1;
 and generate_write fmt ({ id = id } as expr) =
 	(match lookup_type id with
 	| Int -> fprintf fmt "%a@,call_builtin print_int" generate_expr expr;
