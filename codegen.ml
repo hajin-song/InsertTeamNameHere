@@ -12,7 +12,7 @@ open Format;;
 
 let indent = 4;;
 let reg = ref (-1);;
-let label = ref 0;;
+let label_count = ref 0;;
 
 let scope : string Stack.t = Stack.create ();;
 
@@ -29,20 +29,12 @@ let this_scope () = Stack.top scope;;
 (*	print_type
 	* prints out type string
 *)
-let print_type fmt t =
+let print_type t =
 	match t with
-	| Int -> fprintf fmt "int";
-	| Float -> fprintf fmt "real";
-	| Bool -> fprintf fmt "bool";;
+	| Int -> sprintf "int";
+	| Float -> sprintf "real";
+	| Bool -> sprintf "bool";;
 
-(* print_coercion
-	* print out coercion command
-*)
-let print_coercion fmt (lt, rt, lreg, rreg) =
-	match lt, rt with
-	| Int, Float -> fprintf fmt "@,int_to_real r%i, r%i" lreg lreg;
-	| Float, Int -> fprintf fmt "@,int_to_real r%i, r%i" rreg rreg;
-	| _, _ -> ();;
 
 (* print_binop
 	* prints out command for binary operator - OPERATION STRING ONLY
@@ -62,6 +54,7 @@ let print_binop fmt op =
 	| Op_and -> fprintf fmt "and";
 	| Op_or -> fprintf fmt "or";;
 
+
 (* print_unop
 	* prints out command for unary operator - OPERATION STRING ONLY
 *)
@@ -70,28 +63,97 @@ let print_unop fmt op =
 	| Op_not -> fprintf fmt "not";
 	| Op_minus -> ();;
 
-(* print_var
+
+(* print_var_decl
 	* print out brill command for variable storage
 *)
-let print_var fmt stack t =
+let print_var_decl fmt stack t =
 	match t with
 	| Int ->	fprintf fmt "@,int_const r0, 0@,store %i, r0" stack;
 	| Float ->	fprintf fmt "@,real_const r0, 0.0@,store %i, r0" stack;
 	| Bool -> fprintf fmt "@,int_const r0, 0@,store %i, r0" stack;;
 
+
 let rec print_arr_decl fmt t start_ptr end_ptr =
 	match t with
-	| Int -> fprintf fmt "@,int_const r0, 0%a" print_fill_arr (start_ptr, end_ptr);
-	| Float -> fprintf fmt "@,real_const r0, 0.0%a" print_fill_arr (start_ptr, end_ptr);
-	| Bool -> fprintf fmt "@,int_const r0, 0%a" print_fill_arr (start_ptr, end_ptr);
+	| Int ->
+		fprintf fmt "@,int_const r0, 0%a"
+		print_fill_arr (start_ptr, end_ptr);
+	| Float ->
+		fprintf fmt "@,real_const r0, 0.0%a"
+		print_fill_arr (start_ptr, end_ptr);
+	| Bool ->
+		fprintf fmt "@,int_const r0, 0%a"
+		print_fill_arr (start_ptr, end_ptr);
+
 and print_fill_arr fmt (curr_ptr, end_ptr) =
 	if curr_ptr <= end_ptr then
 		fprintf fmt "@,store %i, r0%a"
 		curr_ptr
 		print_fill_arr (curr_ptr + 1, end_ptr);;
 
+
+let print_arg_ref fmt ident =
+	incr reg;
+	match lookup_symbol (this_scope()) ident with
+	| Var { var_stack = stack } ->
+		fprintf fmt "@,load_address r%i, %i"
+		!reg
+		stack;
+	| _ -> print_string "Not implemented\n"; exit 0;;
+
+
+let print_binop_type fmt (t1, t2, t3) =
+	match t1, t2, t3 with
+	| Bool, _, Float -> fprintf fmt "real"
+	| Bool, Float, _ -> fprintf fmt "real"
+	| Bool, Int, Int -> fprintf fmt "int"
+	| Int, _, _ -> fprintf fmt "int"
+	| Float, _, _ -> fprintf fmt "real"
+	| _ -> fprintf fmt "bool";;
+
+
+(* print_binop_coerce
+	* print out coercion command
+*)
+let print_binop_coerce fmt (lt, rt, lreg, rreg) =
+	match lt, rt with
+	| Int, Float -> fprintf fmt "@,int_to_real r%i, r%i" lreg lreg;
+	| Float, Int -> fprintf fmt "@,int_to_real r%i, r%i" rreg rreg;
+	| _, _ -> ();;
+
+
+let print_coerce fmt ({id = id}, t, r) =
+	let t2 = lookup_type id in
+	if t = Float && t2 = Int then fprintf fmt "@,int_to_real r%i, r%i" r r;;
+
 (* ========================================================================== *)
 
+
+let print_bool_expr fmt value =
+	incr reg;
+	if value = true then
+		fprintf fmt "@,int_const r%i, 1" !reg
+	else
+		fprintf fmt "@,int_const r%i, 0" !reg;;
+
+let print_int_expr fmt value =
+	incr reg;
+	fprintf fmt "@,int_const r%i, %i" !reg value;;
+
+let print_real_expr fmt value =
+	incr reg;
+	fprintf fmt "@,real_const r%i, %f" !reg value;;
+
+let print_var_expr fmt ident =
+	incr reg;
+	match lookup_symbol (this_scope()) ident with
+	| Var { pass_by = Value; var_stack = stack } ->
+		fprintf fmt "@,load r%i, %i" !reg stack;
+	| Var { pass_by = Reference; var_stack = stack } ->
+		fprintf fmt "@,load r%i, %i@,load_indirect r%i, r%i"
+		!reg stack !reg !reg;
+	| _ -> print_string "Not implemented\n"; exit 0;;
 
 (*
 	* generate_binop
@@ -113,19 +175,10 @@ let rec generate_binop fmt (id, op, { id = lid }, { id = rid }) =
 		lreg lreg rreg;
 	| _ ->
 		fprintf fmt "%a@,%a%a r%i, r%i, r%i"
-		print_coercion (lt, rt, lreg, rreg)
+		print_binop_coerce (lt, rt, lreg, rreg)
 		print_binop op
 		print_binop_type (t, lt, rt)
-		lreg lreg rreg;
-
-and print_binop_type fmt (t1, t2, t3) =
-	match t1, t2, t3 with
-	| Bool, _, Float -> fprintf fmt "real"
-	| Bool, Float, _ -> fprintf fmt "real"
-	| Bool, Int, Int -> fprintf fmt "int"
-	| Int, _, _ -> fprintf fmt "int"
-	| Float, _, _ -> fprintf fmt "real"
-	| _ -> fprintf fmt "bool";;
+		lreg lreg rreg;;
 
 (* generate_unop
 	* prints brills unary operator command
@@ -136,36 +189,19 @@ let generate_unop fmt (op, { id = id }) =
 		fprintf fmt "@,not r%i, r%i" !reg !reg
 	| Op_minus ->
 		let t = lookup_type id in
-		fprintf fmt "@,%a_const r%i, -1@,mul_%a r%i, r%i, r%i"
-		print_type t (!reg + 1) print_type t !reg !reg (!reg + 1);;
+		fprintf fmt "@,%s_const r%i, -1@,mul_%s r%i, r%i, r%i"
+		(print_type t) (!reg + 1)
+		(print_type t) !reg !reg (!reg + 1);;
 
 (* generate_expr
 	* prints brill command for expressions
 *)
 let rec generate_expr fmt expr =
 	match expr with
-	| { expr = Ebool (value); id = id } ->
-		incr reg;
-		if value = true then
-			fprintf fmt "@,int_const r%i, 1" !reg
-		else
-			fprintf fmt "@,int_const r%i, 0" !reg;
-	| { expr = Eint (value); id = id } ->
-		incr reg;
-		fprintf fmt "@,int_const r%i, %i" !reg value;
-	| { expr = Efloat (value); id = id } ->
-		incr reg;
-		fprintf fmt "@,real_const r%i, %f" !reg value;
-	| { expr = EId (ident); id = id } ->
-		(match lookup_symbol (this_scope()) ident with
-		| Var { pass_by = Value; var_stack = stack } ->
-			incr reg;
-			fprintf fmt "@,load r%i, %i" !reg stack;
-		| Var { pass_by = Reference; var_stack = stack } ->
-			incr reg;
-			fprintf fmt "@,load r%i, %i@,load_indirect r%i, r%i"
-			!reg stack !reg !reg;
-		| _ -> print_string "Not implemented\n"; exit 0;)
+	| { expr = Ebool (value) } -> print_bool_expr fmt value;
+	| { expr = Eint (value) } -> print_int_expr fmt value;
+	| { expr = Efloat (value) } -> print_real_expr fmt value;
+	| { expr = EId (ident) } ->	print_var_expr fmt ident;
 	| { expr = Ebinop (lexpr, (op, _, _), rexpr); id = id } ->
 		fprintf fmt "%a%a%a"
 		generate_expr lexpr
@@ -175,30 +211,113 @@ let rec generate_expr fmt expr =
 		fprintf fmt "%a%a"
 		generate_expr expr
 		generate_unop (op, expr);
-	| { expr = Earray (ident, exprs) } ->
-		(match lookup_symbol (this_scope()) ident with
-		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
-			fprintf fmt "%a@,load_indirect r%i, r%i"
-			get_arr_index (stack, t, ranges, exprs)
-			(!reg + 1) (!reg + 1);
-		| _ -> print_string "Not implemented\n"; exit 0;);
-and get_arr_index fmt (stack, t, ranges, exprs) =
+	| { expr = Earray (ident, exprs) } -> generate_arr_expr fmt ident exprs;
+
+and generate_arr_expr fmt ident exprs =
+	match lookup_symbol (this_scope()) ident with
+	| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
+		fprintf fmt "%a@,load_indirect r%i, r%i"
+		generate_arr_index (stack, t, ranges, exprs)
+		(!reg + 1) (!reg + 1);
+	| _ -> print_string "Not implemented\n"; exit 0;
+
+and generate_arr_index fmt (stack, t, ranges, exprs) =
 	incr reg;
 	fprintf fmt "@,load_address r%i, %i%a@,sub_offset r%i, r%i, r%i"
 	!reg stack
-	arr_index (ranges, exprs)
+	print_arr_index (ranges, exprs)
 	!reg !reg (!reg + 1);
-and arr_index fmt (ranges, exprs) =
+
+and print_arr_index fmt (ranges, exprs) =
 	match ranges, exprs with
 	| (lo, hi)::rtail, e::etail ->
 		fprintf fmt "%a@,int_const r%i, %i@,sub_int r%i, r%i, r%i%a@,mul_int r%i, r%i, r%i"
 		generate_expr e
 		(!reg + 2) lo
 		(!reg + 1) (!reg + 1) (!reg + 2)
-		arr_index (rtail, etail)
+		print_arr_index (rtail, etail)
 		(!reg + 1) (!reg + 1) (!reg + 2);
 		decr reg;
 	| _ -> fprintf fmt "@,int_const r%i, 1" (!reg + 1);;
+
+
+let print_read_var fmt ident =
+	match lookup_symbol (this_scope()) ident with
+	| Var { var_stack = stack; var_t = var_t } ->
+		fprintf fmt "@,@[<v 4># read@,call_builtin read_%s@,store %i, r0@]"
+		(print_type var_t)
+		stack;
+	| _ -> print_string "Not implemented\n"; exit 0;;
+
+
+let print_read_arr fmt ident exprs = ();;
+
+
+let print_write fmt ({ id = id } as expr) =
+	let t = lookup_type id in
+	fprintf fmt "@,@[<v 4># write%a@,call_builtin print_%s@]"
+	generate_expr expr
+	(print_type t);
+	decr reg;;
+
+
+let print_writeS fmt str =
+	let s = sprintf "string_const r0, \"%s\"@,call_builtin print_string" str in
+	fprintf fmt "@,@[<v 4># write@,%s@]" s;;
+
+
+let rec generate_assign fmt lvalue expr =
+	fprintf fmt "@,@[<v 4># assignment%a%a"
+	generate_expr expr
+	generate_lvalue (lvalue, expr);
+
+and generate_lvalue fmt (lvalue, expr) =
+	match lvalue with
+	| LId (ident) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Var { pass_by = Value; var_stack = stack; var_t = t } ->
+			fprintf fmt "%a@,store %i, r0@]"
+			print_coerce (expr, t, !reg + 1)
+			stack;
+			decr reg;
+		| Var { pass_by = Reference; var_stack = stack; var_t = t } ->
+			fprintf fmt "%a@,load r1, %i@,store_indirect r1, r0@]"
+			print_coerce (expr, t, !reg + 1)
+			stack;
+			decr reg;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+	| Larray (ident, indexes) ->
+		(match lookup_symbol (this_scope()) ident with
+		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
+			fprintf fmt "%a%a@,store_indirect r%i, r%i@]"
+			print_coerce (expr, t, !reg + 1)
+			generate_arr_index (stack, t, ranges, indexes)
+			(!reg + 2) (!reg + 1);
+			decr reg;
+			decr reg;
+		| _ -> print_string "Not implemented\n"; exit 0;);;
+
+
+let rec generate_proccall fmt ident exprs =
+	let { args = args } = lookup_proc ident in
+	fprintf fmt "@,@[<v 4># proc call%a@,call proc_%s@]"
+	generate_proccall_args (args, exprs)
+	ident;
+	reg := -1;
+
+and generate_proccall_args fmt (args, exprs) =
+	match args, exprs with
+	| { pass_by = Value; var_t = var_t }::atail, expr::etail ->
+		fprintf fmt "%a%a%a"
+		generate_expr expr
+		print_coerce (expr, var_t, !reg + 1)
+		generate_proccall_args (atail, etail);
+	| { pass_by = Reference }::atail, { expr = EId ident }::etail ->
+		fprintf fmt "%a%a"
+		print_arg_ref ident
+		generate_proccall_args (atail, etail);
+	| _ -> ();;
+
 
 (* Statement Declaration
 	* Recursively generates statements within the current proc
@@ -208,120 +327,59 @@ let rec generate_stmts fmt stmts =
 	match stmts with
 	| (stmt::tail) -> generate_stmt fmt stmt; generate_stmts fmt tail;
 	| [] -> ()
+
 and generate_stmt fmt stmt =
 	match stmt with
-	| Read (LId ident) ->
-		(match lookup_symbol (this_scope()) ident with
-		| Var { var_stack = stack; var_t = var_t } ->
-			fprintf fmt "@,@[<v 4># read@,call_builtin read_%a@,store %i, r0@]"
-			print_type var_t
-			stack;
-		| _ -> print_string "Not implemented\n"; exit 0;)
-	| Read (Larray (ident, exprs)) -> ()
-	| Write expr_value ->
-		fprintf fmt "@,@[<v 4># write%a@]"
-		generate_write expr_value;
-	| WriteS string_value ->
-		fprintf fmt "@,@[<v 4># write%a@]"
-		generate_write_string string_value
-	| Ifthen (expr, stmts) ->
-		let l = !label in
-		incr label;
-		fprintf fmt "@,@[<v 4># if%a%a@,label%i:"
-		generate_guard (expr, l)
-		generate_stmts stmts
-		l;
-	| Ifthenelse (expr_guard, stmts_then, stmts_else) ->
-		let l1 = !label in
-		incr label;
-		let l2 = !label in
-		incr label;
-		fprintf fmt "@,@[<v 4># if%a%a@,    branch_uncond label%i@,label%i:@,# else%a@,label%i:"
-		generate_guard (expr_guard, l1)
-		generate_stmts stmts_then
-		l2
-		l1
-		generate_stmts stmts_else
-		l2;
-	| Assign (LId (ident), expr) ->
-		(match lookup_symbol (this_scope()) ident with
-		| Var { pass_by = Value; var_stack = stack; var_t = t } ->
-			fprintf fmt "@,@[<v 4># assignment%a%a@,store %i, r0@]"
-			generate_expr expr
-			var_coerce (expr, t, !reg + 1)
-			stack;
-			decr reg;
-		| Var { pass_by = Reference; var_stack = stack; var_t = t } ->
-			fprintf fmt "@,@[<v 4># assignment%a%a@,load r1, %i@,store_indirect r1, r0@]"
-			generate_expr expr
-			var_coerce (expr, t, !reg + 1)
-			stack;
-			decr reg;
-		| _ -> print_string "Not implemented\n"; exit 0;)
-	| Assign (Larray (ident, indexes), expr) ->
-		(match lookup_symbol (this_scope()) ident with
-		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
-			fprintf fmt "@,@[<v 4># assignment%a%a%a@,store_indirect r%i, r%i@]"
-			generate_expr expr
-			var_coerce (expr, t, !reg + 1)
-			get_arr_index (stack, t, ranges, indexes)
-			(!reg + 2) (!reg + 1);
-			decr reg;
-			decr reg;
-		| _ -> print_string "Not implemented\n"; exit 0;)
-	| While (expr_guard, stmts) ->
-		let l1 = !label in
-		incr label;
-		let l2 = !label in
-		incr label;
-		fprintf fmt "@,# while@,@[<v 4>label%i:%a%a@,    branch_uncond label%i@,label%i:"
-		l1
-		generate_guard (expr_guard, l2)
-		generate_stmts stmts
-		l1
-		l2;
-	| Proccall (ident, exprs) ->
-		let { args = args } = lookup_proc ident in
-		fprintf fmt "@,@[<v 4># proc call%a@,call proc_%s@]"
-		generate_arg_exprs (args, exprs)
-		ident;
-		reg := -1;
-and generate_write fmt ({ id = id } as expr) =
-	(match lookup_type id with
-	| Int -> fprintf fmt "%a@,call_builtin print_int" generate_expr expr;
-	| Float -> fprintf fmt "%a@,call_builtin print_real" generate_expr expr;
-	| Bool -> fprintf fmt "%a@,call_builtin print_bool" generate_expr expr;);
-	decr reg;
-and generate_write_string fmt string_value =
-		fprintf fmt "@,string_const r0, \"%s\"@,call_builtin print_string" string_value
+	| Read (LId ident) -> print_read_var fmt ident;
+	| Read (Larray (ident, exprs)) -> print_read_arr fmt ident exprs;
+	| Write expr -> print_write fmt expr;
+	| WriteS str -> print_writeS fmt str;
+	| Ifthen (guard, t) -> generate_ifthen fmt guard t;
+	| Ifthenelse (guard, t, e) -> generate_ifthenelse fmt guard t e;
+	| Assign (lvalue, expr) -> generate_assign fmt lvalue expr;
+	| While (guard, stmts) -> generate_while fmt guard stmts;
+	| Proccall (ident, exprs) -> generate_proccall fmt ident exprs;
+
+and generate_ifthen fmt guard stmts = 
+	let label = sprintf "label%i" !label_count in
+	incr label_count;
+	fprintf fmt "@,@[<v 4># if%a%a@,%s:"
+	generate_guard (guard, label)
+	generate_stmts stmts
+	label;
+
+and generate_ifthenelse fmt guard then_stmts else_stmts =
+	let label1 = sprintf "label%i" !label_count
+	and label2 = sprintf "label%i" (!label_count + 1) in
+	incr label_count;
+	incr label_count;
+	let s = sprintf "    branch_uncond %s" label2 in
+	fprintf fmt "@,@[<v 4># if%a%a@,%s@,%s:@,# else%a@,%s:"
+	generate_guard (guard, label1)
+	generate_stmts then_stmts
+	s
+	label1
+	generate_stmts else_stmts
+	label2;
+
+and generate_while fmt guard stmts =
+	let label1 = sprintf "label%i" !label_count
+	and label2 = sprintf "label%i" (!label_count + 1) in
+	incr label_count;
+	incr label_count;
+	fprintf fmt "@,# while@,@[<v 4>%s:%a%a@,    branch_uncond %s@,%s:"
+	label1
+	generate_guard (guard, label2)
+	generate_stmts stmts
+	label1
+	label2;
+
 and generate_guard fmt (expr, l) =
-	fprintf fmt "%a@,branch_on_false r0, label%i@]"
+	fprintf fmt "%a@,branch_on_false r0, %s@]"
 	generate_expr expr
 	l;
-	decr reg;
-and generate_arg_exprs fmt (args, exprs) =
-	match args, exprs with
-	| { pass_by = Value; var_t = var_t }::atail, expr::etail ->
-		fprintf fmt "%a%a%a"
-		generate_expr expr
-		var_coerce (expr, var_t, !reg + 1)
-		generate_arg_exprs (atail, etail);
-	| { pass_by = Reference }::atail, { expr = EId ident }::etail ->
-		fprintf fmt "%a%a"
-		generate_arg_ref ident
-		generate_arg_exprs (atail, etail);
-	| _ -> ();
-and generate_arg_ref fmt ident =
-	incr reg;
-	match lookup_symbol (this_scope()) ident with
-	| Var { var_stack = stack } ->
-		fprintf fmt "@,load_address r%i, %i"
-		!reg
-		stack;
-	| _ -> print_string "Not implemented\n"; exit 0;
-and var_coerce fmt ({id = id}, t, r) =
-	let t2 = lookup_type id in
-	if t = Float && t2 = Int then fprintf fmt "@,int_to_real r%i, r%i" r r;;
+	decr reg;;
+
 
 (* Declaration generator
 	* Recursively generates declaration within the current proc
@@ -334,19 +392,23 @@ let rec generate_decls fmt decls =
 		generate_decl decl
 		generate_decls tail;
 	| [] -> ();
+
 and generate_decl fmt decl =
-		match decl with
-		| Dvar x -> generate_var fmt x;
-		| Darr x -> generate_arr_decl fmt x;
-and generate_var fmt (t, ident) =
+	match decl with
+	| Dvar x -> generate_var_decl fmt x;
+	| Darr x -> generate_arr_decl fmt x;
+
+and generate_var_decl fmt (t, ident) =
 	match lookup_symbol (this_scope()) ident with
-	| Var { var_stack = stack } -> print_var fmt stack t;
+	| Var { var_stack = stack } -> print_var_decl fmt stack t;
 	| _ -> print_string "Not implemented\n"; exit 0;
+
 and generate_arr_decl fmt (t, ident, _) =
 	match lookup_symbol (this_scope()) ident with
 	| Arr { arr_stack = start_ptr; last_ptr = end_ptr} ->
 		print_arr_decl fmt t start_ptr end_ptr;
 	| _ -> print_string "Not implemented\n"; exit 0;;
+
 
 (* Header generator
 	* Generator for header of the proc
@@ -358,6 +420,7 @@ let rec generate_header fmt (ident, args) =
 	fprintf fmt "@,proc_%s:@,@[<v 4># prologue@,push_stack_frame %i%a"
 	ident !frame generate_args args;
 	reg := -1;
+
 and generate_args fmt args =
 	match args with
 	| (Val (ident, _)::tail) ->
@@ -369,6 +432,7 @@ and generate_args fmt args =
 		generate_arg ident
 		generate_args tail;
 	| [] -> ();
+
 and generate_arg fmt ident =
 	match lookup_symbol (this_scope()) ident with
 	| Var { var_stack = stack } ->
@@ -377,6 +441,7 @@ and generate_arg fmt ident =
 		stack
 		!reg;
 	| _ -> print_string "Not implemented\n"; exit 0;;
+
 
 let rec generate_procs fmt prog =
 	match prog with
@@ -389,9 +454,11 @@ let rec generate_procs fmt prog =
 		generate_epilogue proc
 		generate_procs tail;
 	| [] -> ();
+
 and generate_epilogue fmt proc =
 	let { frame = frame } = lookup_proc proc in
 	fprintf fmt "@,@[<v 4># epilogue@,pop_stack_frame %i@,return@,@]" !frame;;
+
 
 let generate prog =
 	let fmt = Format.std_formatter in
