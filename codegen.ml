@@ -33,7 +33,7 @@ let print_type t =
 	match t with
 	| Int -> sprintf "int";
 	| Float -> sprintf "real";
-	| Bool -> sprintf "bool";;
+	| Bool -> sprintf "int";;
 
 
 (* print_binop
@@ -110,7 +110,7 @@ let print_binop_type fmt (t1, t2, t3) =
 	| Bool, Int, Int -> fprintf fmt "int"
 	| Int, _, _ -> fprintf fmt "int"
 	| Float, _, _ -> fprintf fmt "real"
-	| _ -> fprintf fmt "bool";;
+	| _ -> fprintf fmt "int";;
 
 
 (* print_binop_coerce
