@@ -74,7 +74,7 @@ arguments :
 
 decl :
   | typespec IDENT SEMICOLON { Dvar ($1, $2) }
-  | typespec IDENT LBRACKET range_list RBRACKET SEMICOLON { Darr ($1, $2, $4) }
+  | typespec IDENT LBRACKET range_list RBRACKET SEMICOLON { Darr ($1, $2, List.rev $4) }
 
 decls :
   | decls decl { $2 :: $1 }

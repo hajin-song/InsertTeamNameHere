@@ -75,9 +75,20 @@ let print_unop fmt op =
 *)
 let print_var fmt stack t =
 	match t with
-	| Int ->	fprintf fmt "int_const r0, 0@,store %i, r0" stack;
-	| Float ->	fprintf fmt "real_const r0, 0.0@,store %i, r0" stack;
-	| Bool -> fprintf fmt "int_const r0, 0@,store %i, r0" stack;;
+	| Int ->	fprintf fmt "@,int_const r0, 0@,store %i, r0" stack;
+	| Float ->	fprintf fmt "@,real_const r0, 0.0@,store %i, r0" stack;
+	| Bool -> fprintf fmt "@,int_const r0, 0@,store %i, r0" stack;;
+
+let rec print_arr_decl fmt t start_ptr end_ptr =
+	match t with
+	| Int -> fprintf fmt "@,int_const r0, 0%a" print_fill_arr (start_ptr, end_ptr);
+	| Float -> fprintf fmt "@,real_const r0, 0.0%a" print_fill_arr (start_ptr, end_ptr);
+	| Bool -> fprintf fmt "@,int_const r0, 0%a" print_fill_arr (start_ptr, end_ptr);
+and print_fill_arr fmt (curr_ptr, end_ptr) =
+	if curr_ptr <= end_ptr then
+		fprintf fmt "@,store %i, r0%a"
+		curr_ptr
+		print_fill_arr (curr_ptr + 1, end_ptr);;
 
 (* ========================================================================== *)
 
@@ -163,7 +174,29 @@ let rec generate_expr fmt expr =
 		fprintf fmt "%a%a"
 		generate_expr expr
 		generate_unop (op, expr);
-	| { expr = Earray (ident, exprs) } -> ();;
+	| { expr = Earray (ident, exprs) } ->
+		(match lookup_symbol (this_scope()) ident with
+		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
+			generate_arr_expr fmt stack t ranges exprs;
+		| _ -> print_string "Not implemented\n"; exit 0;)
+and generate_arr_expr fmt stack t ranges exprs =
+	incr reg;
+	fprintf fmt "@,load_address r%i, %i%a@,sub_offset r%i, r%i, r%i@,load_indirect r%i, r%i"
+	!reg stack
+	arr_index (ranges, exprs)
+	!reg !reg (!reg + 1) !reg !reg;
+	decr reg;
+and arr_index fmt (ranges, exprs) =
+	match ranges, exprs with
+	| (lo, hi)::rtail, e::etail ->
+		fprintf fmt "%a@,int_const r%i, %i@,sub_int r%i, r%i, r%i%a@,mul_int r%i, r%i, r%i"
+		generate_expr e
+		(!reg + 2) lo
+		(!reg + 1) (!reg + 1) (!reg + 2)
+		arr_index (rtail, etail)
+		(!reg + 1) (!reg + 1) (!reg + 2);
+		decr reg;
+	| _ -> fprintf fmt "@,int_const r%i, 1" (!reg + 1);;
 
 (* Statement Declaration
 	* Recursively generates statements within the current proc
@@ -288,19 +321,23 @@ and var_coerce fmt ({id = id}, t, r) =
 let rec generate_decls fmt decls =
 	match decls with
 	| (decl::tail) ->
-		fprintf fmt "@,%a%a"
+		fprintf fmt "%a%a"
 		generate_decl decl
 		generate_decls tail;
 	| [] -> ();
 and generate_decl fmt decl =
 		match decl with
 		| Dvar x -> generate_var fmt x;
-		| Darr x -> generate_arr fmt x;
+		| Darr x -> generate_arr_decl fmt x;
 and generate_var fmt (t, ident) =
 	match lookup_symbol (this_scope()) ident with
 	| Var { var_stack = stack } -> print_var fmt stack t;
 	| _ -> print_string "Not implemented\n"; exit 0;
-and generate_arr fmt arr = ();;
+and generate_arr_decl fmt (t, ident, _) =
+	match lookup_symbol (this_scope()) ident with
+	| Arr { arr_stack = start_ptr; last_ptr = end_ptr} ->
+		print_arr_decl fmt t start_ptr end_ptr;
+	| _ -> print_string "Not implemented\n"; exit 0;;
 
 (* Header generator
 	* Generator for header of the proc

@@ -158,7 +158,8 @@ and do_arr_decl t ident ranges =
 		arr_ident = ident;
 		arr_t = t;
 		ranges = ranges;
-		arr_stack = stack
+		arr_stack = stack;
+		last_ptr = stack + size - 1
 	} in
 	insert_symbol !curr_env ident symbol;
 and arr_size ranges =
@@ -198,7 +199,10 @@ let rec expr_type expr =
 	| { expr = Earray (ident, exprs); id = id } ->
 		(
 			match lookup_symbol !curr_env ident with
-			| Arr {arr_t = t; ranges = ranges} -> check_indicies ranges exprs; t;
+			| Arr {arr_t = t; ranges = ranges} ->
+			insert_type id t;
+			check_indicies ranges exprs;
+			t;
 			| _ -> print_string "Non-array identifier used as array\n"; exit 0;
 		)
 and check_indicies ranges exprs =

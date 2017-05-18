@@ -21,7 +21,8 @@ type array = {
   arr_ident : string ;
   arr_t : beantype ;
   ranges : range list ;
-  arr_stack : int
+  arr_stack : int ;
+  last_ptr : int
 }
 
 type symbol_t =
