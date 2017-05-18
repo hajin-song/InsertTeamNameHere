@@ -250,7 +250,17 @@ let print_read_var fmt ident =
 	| _ -> print_string "Not implemented\n"; exit 0;;
 
 
-let print_read_arr fmt ident exprs = ();;
+let print_read_arr fmt ident indexes =
+	match lookup_symbol (this_scope()) ident with
+	| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
+		incr reg;
+		fprintf fmt "@,@[<v 4># read@,call_builtin read_%s%a@,store_indirect r%i, r0@]"
+		(print_type t)
+		generate_arr_index (stack, t, ranges, indexes)
+		(!reg + 1);
+		decr reg;
+		decr reg;
+	| _ -> print_string "Not implemented\n"; exit 0;;
 
 
 let print_write fmt ({ id = id } as expr) =
@@ -262,8 +272,8 @@ let print_write fmt ({ id = id } as expr) =
 
 
 let print_writeS fmt str =
-	let s = sprintf "string_const r0, \"%s\"@,call_builtin print_string" str in
-	fprintf fmt "@,@[<v 4># write@,%s@]" s;;
+	let s = sprintf "string_const r0, \"%s\"" str in
+	fprintf fmt "@,@[<v 4># write@,%s@,call_builtin print_string@]" s;;
 
 
 let rec generate_assign fmt lvalue expr =
@@ -292,7 +302,7 @@ and generate_lvalue fmt (lvalue, expr) =
 			fprintf fmt "%a%a@,store_indirect r%i, r%i@]"
 			print_coerce (expr, t, !reg + 1)
 			generate_arr_index (stack, t, ranges, indexes)
-			(!reg + 2) (!reg + 1);
+			(!reg + 1) !reg;
 			decr reg;
 			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;);;
