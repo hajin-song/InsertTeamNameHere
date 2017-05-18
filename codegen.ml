@@ -92,6 +92,7 @@ and print_fill_arr fmt (curr_ptr, end_ptr) =
 
 (* ========================================================================== *)
 
+
 (*
 	* generate_binop
 	* prints brills binary operator command
@@ -177,15 +178,16 @@ let rec generate_expr fmt expr =
 	| { expr = Earray (ident, exprs) } ->
 		(match lookup_symbol (this_scope()) ident with
 		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
-			generate_arr_expr fmt stack t ranges exprs;
-		| _ -> print_string "Not implemented\n"; exit 0;)
-and generate_arr_expr fmt stack t ranges exprs =
+			fprintf fmt "%a@,load_indirect r%i, r%i"
+			get_arr_index (stack, t, ranges, exprs)
+			(!reg + 1) (!reg + 1);
+		| _ -> print_string "Not implemented\n"; exit 0;);
+and get_arr_index fmt (stack, t, ranges, exprs) =
 	incr reg;
-	fprintf fmt "@,load_address r%i, %i%a@,sub_offset r%i, r%i, r%i@,load_indirect r%i, r%i"
+	fprintf fmt "@,load_address r%i, %i%a@,sub_offset r%i, r%i, r%i"
 	!reg stack
 	arr_index (ranges, exprs)
-	!reg !reg (!reg + 1) !reg !reg;
-	decr reg;
+	!reg !reg (!reg + 1);
 and arr_index fmt (ranges, exprs) =
 	match ranges, exprs with
 	| (lo, hi)::rtail, e::etail ->
@@ -256,9 +258,16 @@ and generate_stmt fmt stmt =
 			stack;
 			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;)
-	| Assign (Larray (ident, exprs), expr) ->
+	| Assign (Larray (ident, indexes), expr) ->
 		(match lookup_symbol (this_scope()) ident with
-		| Arr { arr_stack = stack } -> ()
+		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
+			fprintf fmt "@,@[<v 4># assignment%a%a%a@,store_indirect r%i, r%i@]"
+			generate_expr expr
+			var_coerce (expr, t, !reg + 1)
+			get_arr_index (stack, t, ranges, indexes)
+			(!reg + 2) (!reg + 1);
+			decr reg;
+			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;)
 	| While (expr_guard, stmts) ->
 		let l1 = !label in
