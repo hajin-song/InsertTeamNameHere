@@ -287,12 +287,12 @@ and generate_lvalue fmt (lvalue, expr) =
 		(match lookup_symbol (this_scope()) ident with
 		| Var { pass_by = Value; var_stack = stack; var_t = t } ->
 			fprintf fmt "%a@,store %i, r0@]"
-			print_coerce (expr, t, !reg + 1)
+			print_coerce (expr, t, !reg)
 			stack;
 			decr reg;
 		| Var { pass_by = Reference; var_stack = stack; var_t = t } ->
 			fprintf fmt "%a@,load r1, %i@,store_indirect r1, r0@]"
-			print_coerce (expr, t, !reg + 1)
+			print_coerce (expr, t, !reg)
 			stack;
 			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;)
@@ -300,7 +300,7 @@ and generate_lvalue fmt (lvalue, expr) =
 		(match lookup_symbol (this_scope()) ident with
 		| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
 			fprintf fmt "%a%a@,store_indirect r%i, r%i@]"
-			print_coerce (expr, t, !reg + 1)
+			print_coerce (expr, t, !reg)
 			generate_arr_index (stack, t, ranges, indexes)
 			(!reg + 1) !reg;
 			decr reg;
