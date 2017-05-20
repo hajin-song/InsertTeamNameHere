@@ -39,7 +39,7 @@ let main () =
    | Snick_lex.Syntax_error msg ->
     let (ln, col) = Snick_lex.get_lex_pos lexbuf in
     Printf.fprintf stderr
-      "Lexer error: %s at line %i, column %i\n" msg ln col;
+      "Lexer error: at line %i, column %i - %s\n" ln col msg;
     exit 1
    | Parsing.Parse_error ->
     let (ln, col) = Snick_lex.get_lex_pos lexbuf in

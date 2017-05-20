@@ -8,7 +8,8 @@ type variable = {
   pass_by : pass_by ;
   var_ident : string ;
   var_t : beantype ;
-  var_stack : int
+  var_stack : int ;
+  var_is_zero : bool
 }
 
 type proc_t = {
@@ -111,3 +112,13 @@ let lookup_symbol proc ident =
     (* Return symbol if is in current scope *)
     Hashtbl.find procScope ident
   else (print_string "Uninitialised identifier used\n"; exit 0);;
+
+let update_symbol_value proc ident value =
+ let procScope = proc_scope proc in
+ if Hashtbl.mem procScope ident then
+  match Hashtbl.find procScope ident with
+  | Var (variable) ->
+   let new_symbol = { variable with var_is_zero = value } in
+   Hashtbl.replace procScope ident (Var (new_symbol));
+  | _ -> ();
+ else (print_string "Uninitialised identifier used\n"; exit 0);;

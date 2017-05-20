@@ -1,0 +1,9 @@
+proc main()
+	int x;
+	int y;
+
+	x := 10;
+	y := 10;
+	write x;
+	write x/y;
+end

@@ -104,7 +104,8 @@ and build_arg (arg, n) =
 			pass_by = Value;
 			var_ident = ident;
 			var_t = t;
-			var_stack = n
+			var_stack = n;
+			var_is_zero = false;
 		} in
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;
@@ -113,7 +114,8 @@ and build_arg (arg, n) =
 			pass_by = Reference;
 			var_ident = ident;
 			var_t = t;
-			var_stack = n
+			var_stack = n ;
+			var_is_zero = false;
 		} in
 		insert_symbol !curr_env ident (Var symbol);
 		symbol;;
@@ -148,7 +150,8 @@ and do_var_decl t ident =
 		pass_by = Value;
 		var_ident = ident;
 		var_t = t;
-		var_stack = stack
+		var_stack = stack ;
+		var_is_zero = false;
 	} in
 	insert_symbol !curr_env ident symbol;
 and do_arr_decl t ident ranges =
@@ -171,14 +174,32 @@ and arr_size ranges =
 			(hi + 1 - lo) * (arr_size tail);
 	| [] -> 1;;
 
+
+let rec expr_value expr =
+match expr with
+| { expr = Ebool (value); id = id } -> (not value);
+| { expr = Eint (value); id = id } -> if value == 0 then true else false;
+| { expr = Efloat (value); id = id } -> if value == 0.0 then true else false;
+| { expr = EId (ident); id = id } ->
+	(
+		match lookup_symbol !curr_env ident with
+		| Var {var_t = t ; var_is_zero = is_zero } -> is_zero;
+		| _ -> print_string "Array identifier used without index\n"; exit 0;
+	)
+| { expr = Ebinop (lexpr, (binop, _, _), rexpr); id = id } ->
+	(expr_value lexpr) && (expr_value rexpr);
+| { expr = Eunop ((unop, _, _), expr); id = id } -> (expr_value expr);
+| { expr = Earray (ident, exprs); id = id } -> false;;
+
+
 (* expr_type
 	* process expression's type and mark the expression's id to the resulting type
 *)
 let rec expr_type expr =
 	match expr with
-	| { expr = Ebool (_); id = id } -> insert_type id Bool; Bool; (* <- Why? *)
-	| { expr = Eint (_); id = id } -> insert_type id Int; Int;
-	| { expr = Efloat (_); id = id } -> insert_type id Float; Float
+	| { expr = Ebool (value); id = id } -> insert_type id Bool; Bool;
+	| { expr = Eint (value); id = id } -> insert_type id Int; Int;
+	| { expr = Efloat (value); id = id } -> insert_type id Float; Float;
 	| { expr = EId (ident); id = id } ->
 		(
 			match lookup_symbol !curr_env ident with
@@ -190,7 +211,10 @@ let rec expr_type expr =
 		let rtype = expr_type rexpr in
 		let newtype = check_binop binop ltype rtype in
 		insert_type id newtype;
-		newtype;
+		if (expr_value lexpr) || (expr_value rexpr) then
+			(print_string "Zero divison\n"; exit 0;)
+		else
+			newtype;
 	| { expr = Eunop ((unop, _, _), expr); id = id } ->
 		let t = expr_type expr in
 		let newtype = check_unop unop t in
@@ -242,10 +266,13 @@ and check_proc_signature (args : variable list) exprs =
 let rec do_assign lvalue rvalue =
 	match lvalue with
 	| LId (ident) ->
-		(match lookup_symbol !curr_env ident with
-		| Var {var_t = t} -> check_coerce t rvalue;
-		| _ -> print_string "Invalid assignment lvalue\n"; exit 0;
-		)
+		let symbol = lookup_symbol !curr_env ident in
+			(match symbol with
+			| Var {var_t = t} ->
+				check_coerce t rvalue;
+				update_symbol_value !curr_env ident (expr_value rvalue);
+			| _ -> print_string "Invalid assignment lvalue\n"; exit 0;
+			)
 	| Larray (ident, exprs) ->
 		(
 			match lookup_symbol !curr_env ident with

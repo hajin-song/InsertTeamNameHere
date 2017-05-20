@@ -1,0 +1,92 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 1
+    int_const r0, 0
+    store 0, r0
+# write
+    string_const r0, "Enter the number of disks : "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 0, r0
+# write
+    string_const r0, "The sequence of moves involved in the Tower of Hanoi are :\n"
+    call_builtin print_string
+# proc call
+    load r0, 0
+    int_const r1, 1
+    int_const r2, 3
+    int_const r3, 2
+    call proc_towers
+# epilogue
+    pop_stack_frame 1
+    return
+    
+proc_towers:
+# prologue
+    push_stack_frame 4
+    store 0, r0
+    store 1, r1
+    store 2, r2
+    store 3, r3
+# if
+    load r0, 0
+    int_const r1, 1
+    cmp_ne_int r0, r0, r1
+    branch_on_false r0, label0
+# proc call
+    load r0, 0
+    int_const r1, 1
+    sub_int r0, r0, r1
+    load r1, 1
+    load r2, 3
+    load r3, 2
+    call proc_towers
+# write
+    string_const r0, "\n Move disk "
+    call_builtin print_string
+# write
+    load r0, 0
+    call_builtin print_int
+# write
+    string_const r0, " from peg "
+    call_builtin print_string
+# write
+    load r0, 1
+    call_builtin print_int
+# write
+    string_const r0, " to peg "
+    call_builtin print_string
+# write
+    load r0, 2
+    call_builtin print_int
+# proc call
+    load r0, 0
+    int_const r1, 1
+    sub_int r0, r0, r1
+    load r1, 3
+    load r2, 2
+    load r3, 1
+    call proc_towers
+    branch_uncond label1
+label0:
+# else
+# write
+    string_const r0, "\n Move disk 1 from peg "
+    call_builtin print_string
+# write
+    load r0, 1
+    call_builtin print_int
+# write
+    string_const r0, " to peg "
+    call_builtin print_string
+# write
+    load r0, 2
+    call_builtin print_int
+label1:
+# epilogue
+    pop_stack_frame 4
+    return
+    

@@ -1,0 +1,196 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 4
+    int_const r0, 0
+    store 0, r0
+    int_const r0, 0
+    store 1, r0
+    int_const r0, 0
+    store 2, r0
+    int_const r0, 0
+    store 3, r0
+# write
+    string_const r0, "Enter first number: "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 1, r0
+# write
+    string_const r0, "Enter last number: "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 2, r0
+# while
+label0:
+    load r0, 2
+    load r1, 1
+    cmp_lt_int r0, r0, r1
+    branch_on_false r0, label1
+# write
+    string_const r0, "Your last number should be greater than your first number.\n"
+    call_builtin print_string
+# write
+    string_const r0, "Enter last number: "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 2, r0
+    branch_uncond label0
+label1:
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "0: calculate sum, 1: calculate product\n"
+    call_builtin print_string
+# write
+    string_const r0, "Select option (0 or 1): "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 0, r0
+# while
+label2:
+    load r0, 0
+    int_const r1, 0
+    cmp_lt_int r0, r0, r1
+    load r1, 0
+    int_const r2, 1
+    cmp_gt_int r1, r1, r2
+    or r0, r0, r1
+    branch_on_false r0, label3
+# write
+    string_const r0, "Invalid option chosen.\n"
+    call_builtin print_string
+# write
+    string_const r0, "Enter 0 to calculate sum, or 1 to calculate product: "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 0, r0
+    branch_uncond label2
+label3:
+# if
+    load r0, 0
+    int_const r1, 0
+    cmp_eq_int r0, r0, r1
+    branch_on_false r0, label4
+# proc call
+    load r0, 1
+    load r1, 2
+    load_address r2, 3
+    call proc_add
+# write
+    string_const r0, "The sum of all numbers between "
+    call_builtin print_string
+    branch_uncond label5
+label4:
+# else
+# proc call
+    load r0, 1
+    load r1, 2
+    load_address r2, 3
+    call proc_product
+# write
+    string_const r0, "The product of all numbers between "
+    call_builtin print_string
+label5:
+# write
+    load r0, 1
+    call_builtin print_int
+# write
+    string_const r0, " and "
+    call_builtin print_string
+# write
+    load r0, 2
+    call_builtin print_int
+# write
+    string_const r0, " is "
+    call_builtin print_string
+# write
+    load r0, 3
+    call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# epilogue
+    pop_stack_frame 4
+    return
+    
+proc_add:
+# prologue
+    push_stack_frame 4
+    store 0, r0
+    store 1, r1
+    store 2, r2
+    int_const r0, 0
+    store 3, r0
+# assignment
+    load r0, 1
+    store 3, r0
+# while
+label6:
+    load r0, 0
+    load r1, 3
+    cmp_lt_int r0, r0, r1
+    branch_on_false r0, label7
+# assignment
+    load r0, 1
+    load r1, 0
+    add_int r0, r0, r1
+    store 1, r0
+# assignment
+    load r0, 0
+    int_const r1, 1
+    add_int r0, r0, r1
+    store 0, r0
+    branch_uncond label6
+label7:
+# assignment
+    load r0, 1
+    load r1, 2
+    store_indirect r1, r0
+# epilogue
+    pop_stack_frame 4
+    return
+    
+proc_product:
+# prologue
+    push_stack_frame 4
+    store 0, r0
+    store 1, r1
+    store 2, r2
+    int_const r0, 0
+    store 3, r0
+# assignment
+    load r0, 1
+    store 3, r0
+# while
+label8:
+    load r0, 0
+    load r1, 3
+    cmp_lt_int r0, r0, r1
+    branch_on_false r0, label9
+# assignment
+    load r0, 1
+    load r1, 0
+    mul_int r0, r0, r1
+    store 1, r0
+# assignment
+    load r0, 0
+    int_const r1, 1
+    add_int r0, r0, r1
+    store 0, r0
+    branch_uncond label8
+label9:
+# assignment
+    load r0, 1
+    load r1, 2
+    store_indirect r1, r0
+# epilogue
+    pop_stack_frame 4
+    return
+    

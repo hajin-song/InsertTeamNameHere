@@ -1,0 +1,59 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 3
+    int_const r0, 0
+    store 0, r0
+    real_const r0, 0.0
+    store 1, r0
+    int_const r0, 0
+    store 2, r0
+# assignment
+    int_const r0, 5
+    store 0, r0
+# assignment
+    real_const r0, 5.000000
+    store 1, r0
+# assignment
+    int_const r0, 1
+    store 2, r0
+# while
+label0:
+    load r0, 2
+    branch_on_false r0, label1
+# assignment
+    load r0, 0
+    int_const r1, 1
+    add_int r0, r0, r1
+    store 0, r0
+# assignment
+    load r0, 1
+    int_const r1, 1
+    int_to_real r1, r1
+    add_real r0, r0, r1
+    store 1, r0
+# assignment
+    int_const r0, 0
+    store 2, r0
+    branch_uncond label0
+label1:
+# if
+    load r0, 0
+    int_const r1, 6
+    cmp_eq_int r0, r0, r1
+    branch_on_false r0, label2
+# write
+    string_const r0, "yes we do"
+    call_builtin print_string
+    branch_uncond label3
+label2:
+# else
+# write
+    string_const r0, "no we dont"
+    call_builtin print_string
+label3:
+# epilogue
+    pop_stack_frame 3
+    return
+    

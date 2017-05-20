@@ -1,0 +1,132 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 5
+    real_const r0, 0.0
+    store 0, r0
+    real_const r0, 0.0
+    store 1, r0
+    real_const r0, 0.0
+    store 2, r0
+    real_const r0, 0.0
+    store 3, r0
+    real_const r0, 0.0
+    store 4, r0
+# write
+    string_const r0, "please enter two coordinates"
+    call_builtin print_string
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "x1="
+    call_builtin print_string
+# read
+    call_builtin read_real
+    store 0, r0
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "y1="
+    call_builtin print_string
+# read
+    call_builtin read_real
+    store 1, r0
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "x2="
+    call_builtin print_string
+# read
+    call_builtin read_real
+    store 2, r0
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "y2="
+    call_builtin print_string
+# read
+    call_builtin read_real
+    store 3, r0
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# if
+    load r0, 0
+    load r1, 2
+    cmp_eq_real r0, r0, r1
+    load r1, 1
+    load r2, 3
+    cmp_eq_real r1, r1, r2
+    and r0, r0, r1
+    branch_on_false r0, label0
+# write
+    string_const r0, "invalid input"
+    call_builtin print_string
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+    branch_uncond label1
+label0:
+# else
+# if
+    load r0, 1
+    load r1, 3
+    cmp_eq_real r0, r0, r1
+    branch_on_false r0, label2
+# write
+    string_const r0, "slope = 0"
+    call_builtin print_string
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+label2:
+# if
+    load r0, 0
+    load r1, 2
+    cmp_eq_real r0, r0, r1
+    branch_on_false r0, label3
+# write
+    string_const r0, "slope = infinite"
+    call_builtin print_string
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+label3:
+# if
+    load r0, 0
+    load r1, 2
+    cmp_ne_real r0, r0, r1
+    load r1, 1
+    load r2, 3
+    cmp_ne_real r1, r1, r2
+    and r0, r0, r1
+    branch_on_false r0, label4
+# assignment
+    load r0, 3
+    load r1, 1
+    sub_real r0, r0, r1
+    load r1, 2
+    load r2, 0
+    sub_real r1, r1, r2
+    div_real r0, r0, r1
+    store 4, r0
+# write
+    string_const r0, "slope = "
+    call_builtin print_string
+# write
+    load r0, 4
+    call_builtin print_real
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+label4:
+label1:
+# epilogue
+    pop_stack_frame 5
+    return
+    

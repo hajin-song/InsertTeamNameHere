@@ -1,0 +1,40 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 2
+    int_const r0, 0
+    store 0, r0
+    real_const r0, 0.0
+    store 1, r0
+# assignment
+    int_const r0, 1
+    store 0, r0
+# assignment
+    real_const r0, 2.000000
+    store 1, r0
+# write
+    load r0, 0
+    load r1, 1
+    int_to_real r0, r0
+    div_real r0, r0, r1
+    call_builtin print_real
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# assignment
+    real_const r0, 0.000000
+    store 1, r0
+# write
+    load r0, 0
+    load r1, 1
+    int_to_real r0, r0
+    div_real r0, r0, r1
+    call_builtin print_real
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# epilogue
+    pop_stack_frame 2
+    return
+    

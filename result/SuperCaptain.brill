@@ -1,0 +1,51 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 3
+    int_const r0, 0
+    store 0, r0
+    int_const r0, 0
+    store 1, r0
+    int_const r0, 0
+    store 2, r0
+# write
+    string_const r0, "Input two positive integers to compare: "
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 0, r0
+# read
+    call_builtin read_int
+    store 1, r0
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# if
+    load r0, 0
+    load r1, 1
+    cmp_lt_int r0, r0, r1
+    branch_on_false r0, label0
+# assignment
+    load r0, 1
+    store 2, r0
+    branch_uncond label1
+label0:
+# else
+# assignment
+    load r0, 0
+    store 2, r0
+label1:
+# write
+    string_const r0, "The bigger one is: "
+    call_builtin print_string
+# write
+    load r0, 2
+    call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# epilogue
+    pop_stack_frame 3
+    return
+    

@@ -206,7 +206,7 @@ let rec generate_expr fmt expr =
 		fprintf fmt "%a%a%a"
 		generate_expr lexpr
 		generate_expr rexpr
-		generate_binop (id, op, lexpr, rexpr);
+		generate_binop (id, op, lexpr, rexpr)
 	| { expr = Eunop ((op, _, _), expr) } ->
 		fprintf fmt "%a%a"
 		generate_expr expr
@@ -350,7 +350,7 @@ and generate_stmt fmt stmt =
 	| While (guard, stmts) -> generate_while fmt guard stmts;
 	| Proccall (ident, exprs) -> generate_proccall fmt ident exprs;
 
-and generate_ifthen fmt guard stmts = 
+and generate_ifthen fmt guard stmts =
 	let label = sprintf "label%i" !label_count in
 	incr label_count;
 	fprintf fmt "@,@[<v 4># if%a%a@,%s:"

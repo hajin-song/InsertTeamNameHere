@@ -1,0 +1,58 @@
+    call proc_main
+    halt
+proc_main:
+# prologue
+    push_stack_frame 3
+    int_const r0, 0
+    store 0, r0
+    int_const r0, 0
+    store 1, r0
+    int_const r0, 0
+    store 2, r0
+# write
+    string_const r0, "This will perform X multiplied by Y squared."
+    call_builtin print_string
+# read
+    call_builtin read_int
+    store 0, r0
+# read
+    call_builtin read_int
+    store 1, r0
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "Here is X: "
+    call_builtin print_string
+# write
+    load r0, 0
+    call_builtin print_int
+# write
+    string_const r0, " and Y: "
+    call_builtin print_string
+# write
+    load r0, 1
+    call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    string_const r0, "X multiplied by Y squared is: "
+    call_builtin print_string
+# assignment
+    load r0, 0
+    load r1, 1
+    mul_int r0, r0, r1
+    load r1, 1
+    mul_int r0, r0, r1
+    store 2, r0
+# write
+    load r0, 2
+    call_builtin print_int
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# epilogue
+    pop_stack_frame 3
+    return
+    

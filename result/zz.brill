@@ -1,0 +1,107 @@
+    call proc_main
+    halt
+proc_f:
+# prologue
+    push_stack_frame 1
+    store 0, r0
+# assignment
+    load r0, 0
+    load_indirect r0, r0
+    int_const r1, 0
+    load r2, 0
+    load_indirect r2, r2
+    int_to_real r1, r1
+    add_real r1, r1, r2
+    div_real r0, r0, r1
+    int_const r1, 8
+    int_to_real r1, r1
+    mul_real r0, r0, r1
+    load r1, 0
+    store_indirect r1, r0
+# epilogue
+    pop_stack_frame 1
+    return
+    
+proc_main:
+# prologue
+    push_stack_frame 4
+    int_const r0, 0
+    store 0, r0
+    int_const r0, 0
+    store 1, r0
+    real_const r0, 0.0
+    store 2, r0
+    real_const r0, 0.0
+    store 3, r0
+# assignment
+    int_const r0, 33
+    int_const r1, 3
+    add_int r0, r0, r1
+    int_const r1, 8
+    add_int r0, r0, r1
+    int_const r1, 4
+    div_int r0, r0, r1
+    store 0, r0
+# assignment
+    int_const r0, -5
+    load r1, 0
+    add_int r0, r0, r1
+    store 1, r0
+# while
+label0:
+    load r0, 0
+    int_const r1, 1
+    cmp_gt_int r0, r0, r1
+    branch_on_false r0, label1
+# assignment
+    load r0, 1
+    int_to_real r0, r0
+    store 2, r0
+# if
+    load r0, 2
+    int_const r1, 0
+    int_to_real r1, r1
+    cmp_gt_real r0, r0, r1
+    branch_on_false r0, label2
+# write
+    load r0, 2
+    call_builtin print_real
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# write
+    load r0, 3
+    call_builtin print_real
+# write
+    string_const r0, "\n"
+    call_builtin print_string
+# if
+    load r0, 0
+    int_const r1, 2
+    div_int r0, r0, r1
+    load r1, 2
+    int_to_real r0, r0
+    cmp_lt_real r0, r0, r1
+    branch_on_false r0, label4
+# proc call
+    load_address r0, 3
+    call proc_f
+label4:
+    branch_uncond label3
+label2:
+# else
+# proc call
+    load_address r0, 2
+    call proc_f
+label3:
+# assignment
+    load r0, 0
+    int_const r1, 1
+    sub_int r0, r0, r1
+    store 0, r0
+    branch_uncond label0
+label1:
+# epilogue
+    pop_stack_frame 4
+    return
+    
