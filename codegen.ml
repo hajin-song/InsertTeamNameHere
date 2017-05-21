@@ -96,8 +96,12 @@ and print_fill_arr fmt (curr_ptr, end_ptr) =
 let print_arg_ref fmt ident =
 	incr reg;
 	match lookup_symbol (this_scope()) ident with
-	| Var { var_stack = stack } ->
+	| Var { pass_by = Value; var_stack = stack } ->
 		fprintf fmt "@,load_address r%i, %i"
+		!reg
+		stack;
+	| Var { pass_by = Reference; var_stack = stack } ->
+		fprintf fmt "@,load r%i, %i"
 		!reg
 		stack;
 	| _ -> print_string "Not implemented\n"; exit 0;;
