@@ -4,6 +4,11 @@ type pass_by =
   | Value
   | Reference
 
+type symbol_arr_range = {
+  stackSize : int ;
+  range : int * int
+};;
+
 type variable = {
   pass_by : pass_by ;
   var_ident : string ;
@@ -20,7 +25,7 @@ type proc_t = {
 type array = {
   arr_ident : string ;
   arr_t : beantype ;
-  ranges : range list ;
+  ranges : symbol_arr_range list ;
   arr_stack : int ;
   last_ptr : int
 }

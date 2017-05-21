@@ -152,24 +152,37 @@ and do_var_decl t ident =
 	} in
 	insert_symbol !curr_env ident symbol;
 and do_arr_decl t ident ranges =
-	let size = arr_size ranges in
-	let stack = new_arr_ptr !curr_env size in
+	let (lo,hi) = List.hd ranges in
+	let newRanges = arr_size ranges in
+	let stackSize = (List.hd newRanges).stackSize * (hi + 1 - lo) in
+	let stack = new_arr_ptr !curr_env stackSize in
 	let symbol = Arr {
 		arr_ident = ident;
 		arr_t = t;
-		ranges = ranges;
+		ranges = newRanges;
 		arr_stack = stack;
-		last_ptr = stack + size - 1
+		last_ptr = stack + stackSize - 1
 	} in
 	insert_symbol !curr_env ident symbol;
 and arr_size ranges =
 	match ranges with
+	| [(lo,hi)] ->
+		if lo > hi then
+			(print_string "Invalid array range\n"; exit 0)
+		else
+			let r = { range = (lo, hi); stackSize = 1 } in
+			[r];
 	| (lo,hi)::tail ->
 		if lo > hi then
 			(print_string "Invalid array range\n"; exit 0)
 		else
-			(hi + 1 - lo) * (arr_size tail);
-	| [] -> 1;;
+			let rangesTail = arr_size tail in
+			let prev = List.hd rangesTail in
+			let (prevLo, prevHi) = prev.range in
+			let thisSize = prev.stackSize * (prevHi + 1 - prevLo) in
+			let r = { range = (lo, hi); stackSize = thisSize } in
+			r::rangesTail;
+	| [] -> print_string "Invalid array range\n"; exit 0;;
 
 (* expr_type
 	* process expression's type and mark the expression's id to the resulting type

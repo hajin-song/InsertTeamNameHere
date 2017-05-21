@@ -230,15 +230,23 @@ and generate_arr_index fmt (stack, t, ranges, exprs) =
 
 and print_arr_index fmt (ranges, exprs) =
 	match ranges, exprs with
-	| (lo, hi)::rtail, e::etail ->
-		fprintf fmt "%a@,int_const r%i, %i@,sub_int r%i, r%i, r%i%a@,mul_int r%i, r%i, r%i"
-		generate_expr e
-		(!reg + 2) lo
-		(!reg + 1) (!reg + 1) (!reg + 2)
+	| r::rtail, e::etail ->
+		let (lo, hi) = r.range in
+		let stackSize = r.stackSize in
+		let eReg = !reg + 1 in
+		let loReg = !reg + 2 in
+		fprintf fmt "%a%a@,mul_int r%i, r%i, r%i"
+		print_arr_index_size (e, lo, eReg, loReg, stackSize)
 		print_arr_index (rtail, etail)
-		(!reg + 1) (!reg + 1) (!reg + 2);
+		eReg eReg loReg;
 		decr reg;
-	| _ -> fprintf fmt "@,int_const r%i, 1" (!reg + 1);;
+	| _ -> fprintf fmt "@,int_const r%i, 1" (!reg + 1);
+
+and print_arr_index_size fmt (e, lo, eReg, loReg, stackSize) =
+	fprintf fmt "%a@,int_const r%i, %i@,sub_int r%i, r%i, r%i"
+	generate_expr e
+	loReg lo
+	eReg eReg loReg;;
 
 
 let print_read_var fmt ident =
