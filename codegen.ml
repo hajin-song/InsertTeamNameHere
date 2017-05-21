@@ -177,12 +177,25 @@ let rec generate_binop fmt (id, op, { id = lid }, { id = rid }) =
 	| Op_and ->
 		fprintf fmt "@,and r%i, r%i, r%i"
 		lreg lreg rreg;
+	| Op_div ->
+		fprintf fmt "%a%a@,%a%a r%i, r%i, r%i"
+		check_div (rt, rreg)
+		print_binop_coerce (lt, rt, lreg, rreg)
+		print_binop op
+		print_binop_type (t, lt, rt)
+		lreg lreg rreg;
 	| _ ->
 		fprintf fmt "%a@,%a%a r%i, r%i, r%i"
 		print_binop_coerce (lt, rt, lreg, rreg)
 		print_binop op
 		print_binop_type (t, lt, rt)
-		lreg lreg rreg;;
+		lreg lreg rreg;
+
+and check_div fmt (t, reg) =
+	fprintf fmt "@,%s_const r%i,%s@,cmp_eq_%s r%i, r%i, r%i@,branch_on_true r%i, zero_div_err"
+		(print_type t) (reg + 1) (if t = Int then " 0" else " 0.0")
+		(print_type t) (reg + 1) reg (reg + 1)
+		(reg + 1);;
 
 (* generate_unop
 	* prints brills unary operator command
@@ -490,8 +503,14 @@ and generate_epilogue fmt proc =
 	let { frame = frame } = lookup_proc proc in
 	fprintf fmt "@,@[<v 4># epilogue@,pop_stack_frame %i@,return@,@]" !frame;;
 
+let print_zero_div_err =
+	sprintf "@,@[<v 4>zero_div_err:@,string_const r0, \"%s\"@,%s@,halt"
+	"DIVIDE BY ZERO"
+	"call_builtin print_string";;
+
 
 let generate prog =
 	let fmt = Format.std_formatter in
-	fprintf fmt "@[<v>@[<v 4>    call proc_main@,halt@]%a@,@]"
+	fprintf fmt "@[<v>@[<v 4>    call proc_main@,halt@]%s%a@,@]"
+	print_zero_div_err
 	generate_procs prog;;
