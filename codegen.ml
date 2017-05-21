@@ -193,8 +193,9 @@ let generate_unop fmt (op, { id = id }) =
 		fprintf fmt "@,not r%i, r%i" !reg !reg
 	| Op_minus ->
 		let t = lookup_type id in
-		fprintf fmt "@,%s_const r%i, -1@,mul_%s r%i, r%i, r%i"
+		fprintf fmt "@,%s_const r%i,%s@,mul_%s r%i, r%i, r%i"
 		(print_type t) (!reg + 1)
+		(if t = Int then " -1" else " -1.0")
 		(print_type t) !reg !reg (!reg + 1);;
 
 (* generate_expr
