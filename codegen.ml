@@ -3,7 +3,7 @@
  * Brill generator
  * Created By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu L
  * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
- * Last Modified: 11-MAY-2017
+ * Last Modified: 22-MAY-2017
  *)
 
 open Snick_ast;;
@@ -73,7 +73,10 @@ let print_var_decl fmt stack t =
 	| Float ->	fprintf fmt "@,real_const r0, 0.0@,store %i, r0" stack;
 	| Bool -> fprintf fmt "@,int_const r0, 0@,store %i, r0" stack;;
 
-
+(* print_arr_decl
+	* print out brill command for array declaration
+	* Arrays should be filled with 0's when initialised
+*)
 let rec print_arr_decl fmt t start_ptr end_ptr =
 	match t with
 	| Int ->
@@ -92,7 +95,10 @@ and print_fill_arr fmt (curr_ptr, end_ptr) =
 		curr_ptr
 		print_fill_arr (curr_ptr + 1, end_ptr);;
 
-
+(* print_arg_ref
+	* print out brill command for argument references
+	* differt command depending on base by mode
+*)
 let print_arg_ref fmt ident =
 	incr reg;
 	match lookup_symbol (this_scope()) ident with
@@ -106,7 +112,9 @@ let print_arg_ref fmt ident =
 		stack;
 	| _ -> print_string "Not implemented\n"; exit 0;;
 
-
+(* print_binop_type
+	* print out binary operator's type
+*)
 let print_binop_type fmt (t1, t2, t3) =
 	match t1, t2, t3 with
 	| Bool, _, Float -> fprintf fmt "real"
@@ -126,14 +134,17 @@ let print_binop_coerce fmt (lt, rt, lreg, rreg) =
 	| Float, Int -> fprintf fmt "@,int_to_real r%i, r%i" rreg rreg;
 	| _, _ -> ();;
 
-
+(* print_coerce
+	*	print out command for coercion
+	* only allow int to real
+*)
 let print_coerce fmt ({id = id}, t, r) =
 	let t2 = lookup_type id in
 	if t = Float && t2 = Int then fprintf fmt "@,int_to_real r%i, r%i" r r;;
 
-(* ========================================================================== *)
-
-
+(* print expression functions
+	* prints out brill command for constant/variable values
+*)
 let print_bool_expr fmt value =
 	incr reg;
 	if value = true then
@@ -159,9 +170,12 @@ let print_var_expr fmt ident =
 		!reg stack !reg !reg;
 	| _ -> print_string "Not implemented\n"; exit 0;;
 
+(* ========================================================================== *)
+
 (*
 	* generate_binop
 	* prints brills binary operator command
+	* for divisions, check if the values of right expression is non-zero
 *)
 let rec generate_binop fmt (id, op, { id = lid }, { id = rid }) =
 	let rreg = !reg in
@@ -274,7 +288,9 @@ and print_arr_index_size fmt (e, lo, eReg, loReg, stackSize) =
 	loReg stackSize
 	eReg eReg loReg;;
 
-
+(*	print_read_var
+	*	print out brill command for Read command of varaible
+*)
 let print_read_var fmt ident =
 	match lookup_symbol (this_scope()) ident with
 	| Var { var_stack = stack; var_t = var_t } ->
@@ -283,7 +299,9 @@ let print_read_var fmt ident =
 		stack;
 	| _ -> print_string "Not implemented\n"; exit 0;;
 
-
+(* print_read_arr
+	* print out brill command for Read command of array
+*)
 let print_read_arr fmt ident indexes =
 	match lookup_symbol (this_scope()) ident with
 	| Arr { arr_stack = stack; arr_t = t; ranges = ranges } ->
@@ -296,7 +314,10 @@ let print_read_arr fmt ident indexes =
 		decr reg;
 	| _ -> print_string "Not implemented\n"; exit 0;;
 
-
+(* print_write
+	* print out brill command for Write command
+	* string print is done separately
+*)
 let print_write fmt ({ id = id } as expr) =
 	let t = lookup_type id in
 	fprintf fmt "@,@[<v 4># write%a@,call_builtin print_%s@]"
@@ -309,7 +330,9 @@ let print_writeS fmt str =
 	let s = sprintf "string_const r0, \"%s\"" str in
 	fprintf fmt "@,@[<v 4># write@,%s@,call_builtin print_string@]" s;;
 
-
+(* generate_assign
+	* print brill command for assign statements
+*)
 let rec generate_assign fmt lvalue expr =
 	fprintf fmt "@,@[<v 4># assignment%a%a"
 	generate_expr expr
@@ -341,7 +364,10 @@ and generate_lvalue fmt (lvalue, expr) =
 			decr reg;
 		| _ -> print_string "Not implemented\n"; exit 0;);;
 
-
+(*	generate_proccall
+	* generate brill command for procedure calls
+	* Checks procedure arguments as well.
+*)
 let rec generate_proccall fmt ident exprs =
 	let { args = args } = lookup_proc ident in
 	fprintf fmt "@,@[<v 4># proc call%a@,call proc_%s@]"
@@ -384,7 +410,7 @@ and generate_stmt fmt stmt =
 	| While (guard, stmts) -> generate_while fmt guard stmts;
 	| Proccall (ident, exprs) -> generate_proccall fmt ident exprs;
 
-and generate_ifthen fmt guard stmts = 
+and generate_ifthen fmt guard stmts =
 	let label = sprintf "label%i" !label_count in
 	incr label_count;
 	fprintf fmt "@,@[<v 4># if%a%a@,%s:"

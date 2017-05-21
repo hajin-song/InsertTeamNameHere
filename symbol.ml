@@ -1,3 +1,11 @@
+(*
+ * symbol.ml
+ * Symbol Table
+ * Created By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu L
+ * Modified By: Beaudan Campbell-Brown, Ha Jin Song, Mengyu Li
+ * Last Modified: 22-MAY-2017
+ *)
+
 open Snick_ast;;
 
 type pass_by =
@@ -50,6 +58,7 @@ let scopes : scope_tbl_t = Hashtbl.create 100;;
 let procs : proc_tbl_t = Hashtbl.create 100;;
 let types : type_tbl_t = Hashtbl.create 100;;
 
+(* Type Table *)
 let insert_type id t =
   if Hashtbl.mem types id then
     (print_string "Duplicate attribute\n"; exit 0)
@@ -69,6 +78,7 @@ let update_type id t =
   else
     (print_string "Error updating attribute\n"; exit 0;);;
 
+(* Scope table *)
 let proc_scope proc =
   if Hashtbl.mem scopes proc then
     Hashtbl.find scopes proc
@@ -90,6 +100,7 @@ let lookup_proc ident =
   else
     (print_string "Uninitialised identifier used\n"; exit 0);;
 
+(* Scope variable *)
 let insert_symbol proc ident symbol =
   let procScope = proc_scope proc in
   if Hashtbl.mem procScope ident then
