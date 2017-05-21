@@ -235,17 +235,25 @@ and print_arr_index fmt (ranges, exprs) =
 		let stackSize = r.stackSize in
 		let eReg = !reg + 1 in
 		let loReg = !reg + 2 in
-		fprintf fmt "%a%a@,mul_int r%i, r%i, r%i"
+		fprintf fmt "%a%a@,add_int r%i, r%i, r%i"
 		print_arr_index_size (e, lo, eReg, loReg, stackSize)
 		print_arr_index (rtail, etail)
 		eReg eReg loReg;
 		decr reg;
 	| _ -> fprintf fmt "@,int_const r%i, 1" (!reg + 1);
 
+(*	Store this index value in eReg.
+	Store the value of lo in loReg.
+	Store the difference between index and lo (# of 'rows') in eReg.
+	Store the stackSize in loReg.
+	Store # of rows * stackSize in eReg. *)
 and print_arr_index_size fmt (e, lo, eReg, loReg, stackSize) =
-	fprintf fmt "%a@,int_const r%i, %i@,sub_int r%i, r%i, r%i"
+	fprintf fmt
+	"%a@,int_const r%i, %i@,sub_int r%i, r%i, r%i@,int_const r%i, %i@,mul_int r%i, r%i, r%i"
 	generate_expr e
 	loReg lo
+	eReg eReg loReg
+	loReg stackSize
 	eReg eReg loReg;;
 
 
