@@ -288,7 +288,7 @@ let print_write fmt ({ id = id } as expr) =
 	let t = lookup_type id in
 	fprintf fmt "@,@[<v 4># write%a@,call_builtin print_%s@]"
 	generate_expr expr
-	(print_type t);
+	(if t = Bool then "bool" else print_type t);
 	decr reg;;
 
 

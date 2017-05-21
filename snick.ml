@@ -40,10 +40,10 @@ let main () =
     let (ln, col) = Snick_lex.get_lex_pos lexbuf in
     Printf.fprintf stderr
       "Lexer error: %s at line %i, column %i\n" msg ln col;
-    exit 1
+    exit 1;
    | Parsing.Parse_error ->
     let (ln, col) = Snick_lex.get_lex_pos lexbuf in
     Printf.fprintf stderr
       "Parse error at line %i, column %i\n" ln col;
-     exit 1
+     exit 1;;
 let _ = main ()
